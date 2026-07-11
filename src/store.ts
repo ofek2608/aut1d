@@ -13,6 +13,8 @@ import {
 export type Alignment = 'left' | 'center' | 'right'
 export type { RuleMode }
 
+export const CUSTOM_PALETTE = 'custom'
+
 export const PALETTES: Record<string, string[]> = {
   classic:  ['#da1776', '#a2fc25', '#2cabe6', '#da9617', '#f4a261', '#264653', '#6a4c93', '#1982c4', '#8ac926', '#ff595e', '#ffca3a', '#ffd6a5', '#caffbf', '#a8dadc'],
   pastel:   ['#fdf4ff', '#ffd6ff', '#c8b6ff', '#b8c0ff', '#bbd0ff', '#a0c4ff', '#9bf6ff', '#caffbf', '#fdffb6', '#ffadad', '#ffc6ff', '#bde0fe', '#a2d2ff', '#cdb4db', '#ffc8dd', '#ffafcc'],
@@ -37,15 +39,23 @@ interface State {
   config: AutomataConfig;
   alignment: Alignment;
   palette: string;
+  customColors: string[];
+  selectedCustomColor: number;
   rows: number[][];
   selectedState: number;
   ruleMode: RuleMode;
+}
+
+function defaultCustomColors(numStates: number): string[] {
+  return Array.from({ length: numStates }, (_, i) => PALETTES.classic[i] ?? '#888888')
 }
 
 const [store, setStore] = createStore<State>({
   config: DEFAULT_CONFIG,
   alignment: 'center',
   palette: 'classic',
+  customColors: defaultCustomColors(DEFAULT_CONFIG.numStates),
+  selectedCustomColor: 0,
   rows: [],
   selectedState: 0,
   ruleMode: 'symmetric',
@@ -97,6 +107,8 @@ export function setNumStates(n: number) {
   setStore(produce(s => {
     s.config.numStates = n
     s.config.rules = resizeRules(s.config.rules, s.config.numParents, n, s.ruleMode)
+    s.customColors = defaultCustomColors(n).map((color, i) => s.customColors[i] ?? color)
+    if (s.selectedCustomColor >= n) s.selectedCustomColor = Math.max(0, n - 1)
   }))
 }
 
@@ -157,7 +169,20 @@ export function setAlignment(a: Alignment) {
 }
 
 export function setPalette(name: string) {
-  if (name in PALETTES) setStore('palette', name)
+  if (name === CUSTOM_PALETTE || name in PALETTES) setStore('palette', name)
+}
+
+export function activePalette(): string[] {
+  if (store.palette === CUSTOM_PALETTE) return store.customColors
+  return PALETTES[store.palette] ?? PALETTES.classic
+}
+
+export function setCustomColor(index: number, color: string) {
+  setStore('customColors', index, color)
+}
+
+export function setSelectedCustomColor(index: number) {
+  setStore('selectedCustomColor', index)
 }
 
 export function setSelectedState(state: number) {

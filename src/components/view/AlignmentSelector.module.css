@@ -1,0 +1,34 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, var(--size-square-lg));
+  gap: 6px;
+}
+
+.cell {
+  width: var(--size-square-lg);
+  height: var(--size-square-lg);
+  aspect-ratio: 1;
+  flex-shrink: 0;
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+  background: var(--bg2);
+  color: var(--text-h);
+  cursor: pointer;
+  outline: none;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-size-lg);
+  transition: var(--transition-hover);
+}
+
+.cell:hover {
+  outline: var(--outline-hover);
+}
+
+.cell.selected,
+.cell.selected:hover {
+  outline: var(--outline-selected);
+}

@@ -91,86 +91,6 @@
   cursor: pointer;
 }
 
-/* Alignment */
-.alignment-buttons {
-  display: flex;
-  gap: 6px;
-}
-
-.align-btn {
-  flex: 1;
-  padding: 5px 0;
-  font-size: var(--text-size-lg);
-  background: var(--bg2);
-  border: var(--border-width) solid var(--border);
-  color: var(--text);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  outline: none;
-  transition: var(--transition-hover);
-}
-
-.align-btn:hover {
-  outline: var(--outline-hover);
-}
-
-.align-btn.active,
-.align-btn.active:hover {
-  outline: var(--outline-selected);
-}
-
-/* Palette picker */
-.palette-list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.palette-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 5px 6px;
-  background: transparent;
-  border: var(--border-width) solid transparent;
-  cursor: pointer;
-  text-align: left;
-  outline: none;
-  transition: var(--transition-hover);
-  width: 100%;
-}
-
-.palette-row:hover {
-  outline: var(--outline-hover);
-}
-
-.palette-row.active,
-.palette-row.active:hover {
-  outline: var(--outline-selected);
-}
-
-.palette-name {
-  font-size: var(--text-size-md);
-  color: var(--text-h);
-  width: 44px;
-  flex-shrink: 0;
-  text-transform: capitalize;
-}
-
-.palette-swatches {
-  display: flex;
-  gap: 1px;
-  flex: 1;
-  overflow: hidden;
-}
-
-.swatch {
-  flex: 1;
-  height: 14px;
-  min-width: 0;
-}
-
 /* Canvas */
 .canvas-container {
   position: relative;
@@ -218,14 +138,6 @@
 
 .ctrl-btn:hover {
   outline: var(--outline-hover);
-}
-
-.field-hint {
-  font-size: var(--text-size-sm);
-  color: var(--text);
-  opacity: 0.5;
-  margin: 4px 0 0;
-  line-height: 1.4;
 }
 
 /* Mobile */

@@ -1,4 +1,4 @@
-import { store, PALETTES } from '../../store'
+import { store, activePalette } from '../../store'
 import styles from './StateInput.module.css'
 
 export default function StateInput(props: {
@@ -7,7 +7,7 @@ export default function StateInput(props: {
   variant?: 'default' | 'output'
   title?: string
 }) {
-  const palette = () => PALETTES[store.palette] ?? PALETTES['classic']
+  const palette = () => activePalette()
   const editable = () => props.onEdit != null
 
   function handleClick() {

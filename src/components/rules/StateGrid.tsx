@@ -1,9 +1,9 @@
 import { For } from "solid-js";
-import { store, setSelectedState, setNumStates, PALETTES } from "../../store";
+import { store, setSelectedState, setNumStates, activePalette } from "../../store";
 import styles from "./StateGrid.module.css";
 
 function StatePaletteGridCell(props: { state: number }) {
-  const palette = () => PALETTES[store.palette] ?? PALETTES['classic'];
+  const palette = () => activePalette();
   const selected = () => store.selectedState === props.state;
 
   return (

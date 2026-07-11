@@ -1,0 +1,73 @@
+.editor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, var(--size-square-lg));
+  gap: 6px;
+}
+
+.cell {
+  width: var(--size-square-lg);
+  height: var(--size-square-lg);
+  aspect-ratio: 1;
+  flex-shrink: 0;
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+  border: none;
+  cursor: pointer;
+  outline: none;
+  transition: var(--transition-hover);
+}
+
+.cell:hover {
+  outline: var(--outline-hover);
+}
+
+.cell.selected,
+.cell.selected:hover {
+  outline: var(--outline-selected);
+}
+
+.pickerRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pickerLabel {
+  font-size: var(--text-size-sm);
+  color: var(--text);
+  opacity: 0.7;
+  width: 44px;
+  flex-shrink: 0;
+}
+
+.picker {
+  width: var(--size-square-lg);
+  height: var(--size-square-lg);
+  padding: 0;
+  border: var(--border-width) solid var(--border);
+  background: transparent;
+  cursor: pointer;
+}
+
+.picker::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.picker::-webkit-color-swatch {
+  border: none;
+}
+
+.hexInput {
+  flex: 1;
+  min-width: 0;
+  padding: 3px 6px;
+  font-family: var(--mono);
+  font-size: var(--text-size-sm);
+}

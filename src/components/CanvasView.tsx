@@ -1,5 +1,5 @@
 import { batch, createEffect, createMemo, createSignal, onCleanup, onMount, untrack } from 'solid-js'
-import { store, regenerateRows, extendRows, PALETTES } from '../store'
+import { store, regenerateRows, extendRows, activePalette } from '../store'
 // rowWorldStart not needed: per-row alignment uses row.length directly
 
 const BASE_CELL_SIZE = 4
@@ -172,7 +172,7 @@ export default function CanvasView() {
     const rows = store.rows
     const cs = cellSize()
     const outline = cs < 10 ? 0 : 1;
-    const palette = PALETTES[store.palette] ?? PALETTES['classic']
+    const palette = activePalette()
     const px = panX()
     const py = panY()
     const w = canvasW()
