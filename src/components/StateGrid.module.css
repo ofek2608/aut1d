@@ -1,19 +1,19 @@
 .statePaletteGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, 32px);
+  grid-template-columns: repeat(auto-fill, var(--size-square-lg));
   gap: 6px;
 }
 
 .statePaletteGridCell,
 .statePaletteGridButton {
-  width: 32px;
-  height: 32px;
+  width: var(--size-square-lg);
+  height: var(--size-square-lg);
   aspect-ratio: 1;
   flex-shrink: 0;
-  border-radius: 0;
   padding: 0;
   margin: 0;
   box-sizing: border-box;
+  transition: var(--transition-hover);
 }
 
 .statePaletteGridCell {
@@ -22,22 +22,27 @@
   outline: none;
 }
 
-.statePaletteGridCell.selected {
-  outline: 2px solid white;
+.statePaletteGridCell:hover {
+  outline: var(--outline-hover);
+}
+
+.statePaletteGridCell.selected,
+.statePaletteGridCell.selected:hover {
+  outline: var(--outline-selected);
 }
 
 .statePaletteGridButton {
-  border: 1px solid var(--border);
+  border: var(--border-width) solid var(--border);
   background: var(--bg2);
   color: var(--text-h);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: var(--text-size-lg);
+  outline: none;
 }
 
 .statePaletteGridButton:hover {
-  border-color: var(--accent);
-  color: var(--accent);
+  outline: var(--outline-hover);
 }

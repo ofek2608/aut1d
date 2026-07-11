@@ -36,8 +36,6 @@ function StateListRow(props: {
             />
           )}
         </Index>
-      </div>
-      <div class={styles.controls}>
         <button
           type="button"
           class={styles.iconBtn}

@@ -1,16 +1,46 @@
 :root {
-  --text: #9ca3af;
-  --text-h: #f3f4f6;
-  --bg: #16171d;
-  --bg2: #1f2028;
-  --border: #2e303a;
-  --accent: #c084fc;
-  --accent-bg: rgba(192, 132, 252, 0.15);
+  /* Colors */
+  --color-text-secondary: #9ca3af;
+  --color-text-primary: #f3f4f6;
+  --color-bg: #16171d;
+  --color-surface: #1f2028;
+  --color-border: #2e303a;
+  --color-border-subtle: rgba(255, 255, 255, 0.12);
+  --color-outline-hover: #9ca3af;
+  --color-outline-selected: #ffffff;
+  --color-overlay: rgba(0, 0, 0, 0.5);
+  --color-surface-translucent: rgba(22, 23, 29, 0.85);
+
+  /* Borders & outlines */
+  --border-width: 1px;
+  --outline-width: 2px;
+  --outline-hover: var(--outline-width) solid var(--color-outline-hover);
+  --outline-selected: var(--outline-width) solid var(--color-outline-selected);
+
+  /* Sizes */
+  --size-square-sm: 16px;
+  --size-square-lg: 32px;
+
+  /* Typography */
+  --text-size-sm: 11px;
+  --text-size-md: 13px;
+  --text-size-lg: 14px;
+
+  /* Interaction */
+  --transition-hover: outline 0.1s ease;
+  --opacity-disabled: 0.35;
+
+  /* Aliases */
+  --text: var(--color-text-secondary);
+  --text-h: var(--color-text-primary);
+  --bg: var(--color-bg);
+  --bg2: var(--color-surface);
+  --border: var(--color-border);
 
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
 
-  font: 14px/1.5 var(--sans);
+  font: var(--text-size-md)/1.5 var(--sans);
   color: var(--text);
   background: var(--bg);
   color-scheme: dark;
@@ -49,8 +79,7 @@ input, select {
   font: inherit;
   color: inherit;
   background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: 4px;
+  border: var(--border-width) solid var(--border);
 }
 
 select {

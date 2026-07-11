@@ -1,22 +1,23 @@
 .input {
-  width: 16px;
-  height: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  width: var(--size-square-sm);
+  height: var(--size-square-sm);
+  border: var(--border-width) solid var(--color-border-subtle);
   flex-shrink: 0;
   padding: 0;
   margin: 0;
   box-sizing: border-box;
+  outline: none;
+  transition: var(--transition-hover);
 }
 
 .editable {
   cursor: pointer;
-  transition: transform 0.1s;
 }
 
 .editable:hover {
-  transform: scale(1.2);
+  outline: var(--outline-hover);
 }
 
 .output {
-  border-color: var(--accent);
+  border-color: var(--color-outline-selected);
 }
