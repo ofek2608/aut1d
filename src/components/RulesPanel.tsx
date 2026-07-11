@@ -1,8 +1,42 @@
-import { store, setNumParents, setPadLeft, setPadRight, PALETTES } from '../store'
-import { Index } from 'solid-js'
+import { store, setNumParents, setPadLeft, setPadRight, setRuleMode, randomizeRules, computedRuleCount, expectedFullRuleCount, PALETTES, type RuleMode } from '../store'
+import { Index, Show } from 'solid-js'
 import RulesGrid from './RulesGrid'
 import InitialPatternEditor from './InitialPatternEditor'
-import StatePaletteGrid from './StateGrid';
+import StatePaletteGrid from './StateGrid'
+import gridStyles from './RulesGrid.module.css'
+import styles from './RulesPanel.module.css'
+
+function RuleModeCell(props: { mode: RuleMode; icon: string; label: string }) {
+  const selected = () => store.ruleMode === props.mode
+
+  return (
+    <button
+      type="button"
+      class={styles.modeCell}
+      classList={{ [styles.selected]: selected() }}
+      onClick={() => setRuleMode(props.mode)}
+      aria-pressed={selected()}
+      aria-label={props.label}
+      title={props.label}
+    >
+      <i class={`fa-solid fa-${props.icon}`} aria-hidden="true" />
+    </button>
+  )
+}
+
+function RandomizeButton() {
+  return (
+    <button
+      type="button"
+      class={styles.actionCell}
+      onClick={randomizeRules}
+      aria-label="Randomize rules"
+      title="Randomize rules"
+    >
+      <i class="fa-solid fa-dice" aria-hidden="true" />
+    </button>
+  )
+}
 
 function PadEditor(props: { label: string; cells: number[]; onChange: (c: number[]) => void }) {
   const palette = () => PALETTES[store.palette] ?? PALETTES['classic']
@@ -23,7 +57,7 @@ function PadEditor(props: { label: string; cells: number[]; onChange: (c: number
         <Index each={props.cells}>
           {(s, i) => (
             <div
-              class="rule-cell"
+              class={gridStyles.cell}
               style={{ background: palette()[s()] ?? '#888', cursor: 'pointer' }}
               onClick={() => cycle(i)}
             />
@@ -53,7 +87,7 @@ export default function RulesPanel() {
         <StatePaletteGrid />
       </section>
 
-      <section class="panel-section rules-section">
+      <section class={`panel-section ${styles.rulesSection}`}>
         <label class="field-label">
           Parents
           <select
@@ -63,7 +97,22 @@ export default function RulesPanel() {
             {[1, 2, 3, 4, 5].map(n => <option value={n}>{n}</option>)}
           </select>
         </label>
-        <div class="section-header">Rules ({store.config.rules.length})</div>
+        <Show when={store.config.numParents >= 2}>
+          <div class="section-header">Neighborhood</div>
+        </Show>
+        <div class={styles.modeGrid}>
+          <Show when={store.config.numParents >= 2}>
+            <RuleModeCell mode="asymmetric" icon="arrow-right-long" label="Asymmetric" />
+            <RuleModeCell mode="symmetric" icon="right-left" label="Symmetric" />
+            <Show when={store.config.numParents >= 3}>
+              <RuleModeCell mode="unordered" icon="shuffle" label="Unordered" />
+            </Show>
+          </Show>
+          <RandomizeButton />
+        </div>
+        <div class="section-header">
+          Rules ({computedRuleCount()} / {expectedFullRuleCount()})
+        </div>
         <RulesGrid />
       </section>
 

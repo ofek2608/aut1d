@@ -23,8 +23,8 @@ export default function InitialPatternEditor() {
         <Index each={store.config.initial}>
           {(s, i) => (
             <div
-              class="rule-cell"
-              style={{ background: palette()[s()] ?? '#888', cursor: 'pointer', 'flex-shrink': '0' }}
+              class="initial-cell"
+              style={{ background: palette()[s()] ?? '#888' }}
               title={`State ${s()}, click to cycle`}
               onClick={() => cycleCell(i)}
             />

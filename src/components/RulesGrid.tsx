@@ -1,53 +1,45 @@
-import { For, Index } from 'solid-js'
+import { For, Index, createMemo } from 'solid-js'
 import { store, setRule, PALETTES } from '../store'
-
-function decodeNeighborhood(index: number, numParents: number, numStates: number): number[] {
-  const digits: number[] = []
-  let n = index
-  for (let i = 0; i < numParents; i++) {
-    digits.unshift(n % numStates)
-    n = Math.floor(n / numStates)
-  }
-  return digits
-}
+import { decodeNeighborhood, displayRuleIndices } from '../rules'
+import styles from './RulesGrid.module.css'
 
 export default function RulesGrid() {
   const palette = () => PALETTES[store.palette] ?? PALETTES['classic']
-  const ruleCount = () => store.config.rules.length
+
+  const displayIndices = createMemo(() =>
+    displayRuleIndices(store.config.numParents, store.config.numStates, store.ruleMode),
+  )
 
   return (
-    <div class="rules-grid">
-      <For each={store.config.rules}>
-        {(outputState, i) => {
-          const neighborhood = () => decodeNeighborhood(i(), store.config.numParents, store.config.numStates)
+    <div class={styles.grid}>
+      <For each={displayIndices()}>
+        {(ruleIndex) => {
+          const neighborhood = () =>
+            decodeNeighborhood(ruleIndex, store.config.numParents, store.config.numStates)
+          const outputState = () => store.config.rules[ruleIndex]
+
           return (
-            <div class="rule-entry">
-              <div class="rule-neighborhood">
+            <div class={styles.entry}>
+              <div class={styles.neighborhood}>
                 <Index each={neighborhood()}>
                   {(s) => (
                     <div
-                      class="rule-cell"
+                      class={styles.cell}
                       style={{ background: palette()[s()] ?? '#888' }}
                     />
                   )}
                 </Index>
               </div>
-              <div class="rule-arrow" aria-hidden="true">
-                <i class="fa-solid fa-arrow-right" />
-              </div>
               <div
-                class="rule-output"
-                style={{ background: palette()[outputState] ?? '#888' }}
-                title={`Rule ${i()}: click to cycle (currently ${outputState})`}
-                onClick={() => setRule(i(), (outputState + 1) % store.config.numStates)}
+                class={styles.output}
+                style={{ background: palette()[outputState()] ?? '#888' }}
+                title={`Rule ${ruleIndex}: click to cycle (currently ${outputState()})`}
+                onClick={() => setRule(ruleIndex, (outputState() + 1) % store.config.numStates)}
               />
             </div>
           )
         }}
       </For>
-      {ruleCount() > 50 && (
-        <p class="rules-note">{ruleCount()} rules total</p>
-      )}
     </div>
   )
 }

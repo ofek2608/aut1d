@@ -40,12 +40,6 @@
   gap: 8px;
 }
 
-.rules-section {
-  flex: 1;
-  overflow-y: auto;
-  min-height: 0;
-}
-
 .section-header {
   font-size: 11px;
   font-weight: 600;
@@ -112,62 +106,6 @@
   color: var(--accent);
 }
 
-/* Rules grid */
-.rules-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.rule-entry {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.rule-neighborhood {
-  display: flex;
-  gap: 2px;
-}
-
-.rule-cell {
-  width: 16px;
-  height: 16px;
-  border-radius: 2px;
-  border: 1px solid rgba(255,255,255,0.1);
-  flex-shrink: 0;
-}
-
-.rule-arrow {
-  color: var(--text);
-  opacity: 0.4;
-  font-size: 11px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-}
-
-.rule-output {
-  width: 16px;
-  height: 16px;
-  border-radius: 2px;
-  border: 1px solid var(--accent);
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: transform 0.1s;
-}
-
-.rule-output:hover {
-  transform: scale(1.2);
-}
-
-.rules-note, .presets-note {
-  font-size: 11px;
-  color: var(--text);
-  opacity: 0.5;
-  margin: 4px 0 0;
-}
-
 /* Preset buttons */
 .preset-buttons {
   display: flex;
@@ -208,6 +146,15 @@
   display: flex;
   gap: 2px;
   flex-wrap: wrap;
+}
+
+.initial-cell {
+  width: 16px;
+  height: 16px;
+  border-radius: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
+  cursor: pointer;
 }
 
 .initial-controls {

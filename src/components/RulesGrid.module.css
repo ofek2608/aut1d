@@ -1,0 +1,40 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
+  gap: 8px;
+}
+
+.entry {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.neighborhood {
+  display: flex;
+  gap: 2px;
+  justify-content: center;
+}
+
+.cell {
+  width: 16px;
+  height: 16px;
+  border-radius: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
+}
+
+.output {
+  width: 16px;
+  height: 16px;
+  border-radius: 2px;
+  border: 1px solid var(--accent);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: transform 0.1s;
+}
+
+.output:hover {
+  transform: scale(1.2);
+}
