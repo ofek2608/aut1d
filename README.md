@@ -1,28 +1,36 @@
-## Usage
+# Aut1D
+
+An interactive playground for one-dimensional cellular automata. Define states and rules, paint an initial pattern, and watch it evolve row by row.
+
+## Features
+
+- **Rules** — Configure neighborhood size, rule mode (asymmetric, symmetric, or unordered), and a full rule table
+- **Pattern** — Set the initial row and padding on each side
+- **Identifier** — Share or restore configurations with a compact encoded string
+- **View** — Choose color palettes, customize colors, and align the automata on the canvas
+- **Canvas** — Pan, zoom, and explore the evolving grid
+
+## Development
 
 ```bash
-$ npm install # or pnpm install or yarn install
+pnpm install
+pnpm dev
 ```
 
-### Learn more on the [Solid Website](https://solidjs.com) and come chat with us on our [Discord](https://discord.com/invite/solidjs)
+Open [http://localhost:5173/aut1d](http://localhost:5173/aut1d) in your browser.
 
-## Available Scripts
+## Scripts
 
-In the project directory, you can run:
-
-### `npm run dev`
-
-Runs the app in the development mode.<br>
-Open [http://localhost:5173](http://localhost:5173) to view it in the browser.
-
-### `npm run build`
-
-Builds the app for production to the `dist` folder.<br>
-It correctly bundles Solid in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.<br>
-Your app is ready to be deployed!
+| Command | Description |
+| --- | --- |
+| `pnpm dev` | Start the development server |
+| `pnpm build` | Type-check and build for production |
+| `pnpm preview` | Preview the production build locally |
 
 ## Deployment
 
-Learn more about deploying your application with the [documentations](https://vite.dev/guide/static-deploy.html)
+Build output goes to `dist/`. See the [Vite static deploy guide](https://vite.dev/guide/static-deploy.html) for hosting options.
+
+## Author
+
+Made by **OfekN**
