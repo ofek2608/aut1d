@@ -1,4 +1,4 @@
-import { For } from "solid-js";
+import { For, createMemo } from "solid-js";
 import { store, setSelectedState, setNumStates, activePalette } from "../../store";
 import styles from "./StateGrid.module.css";
 
@@ -34,9 +34,13 @@ function ChangeNumStatesButton(props: { icon: string; diff: number; label: strin
 }
 
 export default function StatePaletteGrid() {
+  const stateIndices = createMemo(() =>
+    Array.from({ length: store.config.numStates }, (_, index) => index),
+  )
+
   return (
     <div class={styles.statePaletteGrid}>
-      <For each={Array.from({ length: store.config.numStates }, (_, index) => index)}>
+      <For each={stateIndices()}>
         {state => <StatePaletteGridCell state={state} />}
       </For>
       <ChangeNumStatesButton icon="minus" diff={-1} label="Remove state" />
