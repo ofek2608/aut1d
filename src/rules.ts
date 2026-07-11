@@ -59,7 +59,7 @@ export function isSymmetricDisplay(index: number, numParents: number, numStates:
   const digits = decodeNeighborhood(index, numParents, numStates)
   const left = digits[0]
   const right = digits[digits.length - 1]
-  return left > right || left === right
+  return left <= right
 }
 
 export function isUnorderedDisplay(index: number, numParents: number, numStates: number): boolean {

@@ -1,4 +1,4 @@
-import { store, setNumParents, setRuleMode, randomizeRules, computedRuleCount, expectedFullRuleCount, type RuleMode } from '../../store'
+import { store, setNumParents, setRuleMode, randomizeRules, computedRuleCount, type RuleMode } from '../../store'
 import { Show } from 'solid-js'
 import RulesGrid from './RulesGrid'
 import StateListEditor from './StateListEditor'
@@ -64,17 +64,13 @@ export default function RulesPanel() {
           <div class="section-header">Neighborhood</div>
         </Show>
         <div class={styles.modeGrid}>
-          <Show when={store.config.numParents >= 2}>
-            <RuleModeCell mode="asymmetric" icon="arrow-right-long" label="Asymmetric" />
-            <RuleModeCell mode="symmetric" icon="right-left" label="Symmetric" />
-            <Show when={store.config.numParents >= 3}>
-              <RuleModeCell mode="unordered" icon="shuffle" label="Unordered" />
-            </Show>
-          </Show>
+          <RuleModeCell mode="asymmetric" icon="arrow-right-long" label="Asymmetric" />
+          <RuleModeCell mode="symmetric" icon="right-left" label="Symmetric" />
+          <RuleModeCell mode="unordered" icon="shuffle" label="Unordered" />
           <RandomizeButton />
         </div>
         <div class="section-header">
-          Rules ({computedRuleCount()} / {expectedFullRuleCount()})
+          Rules ({computedRuleCount()})
         </div>
         <RulesGrid />
       </section>

@@ -86,20 +86,16 @@ export function extendRows(targetCount: number) {
   }))
 }
 
-function clampRuleMode(mode: RuleMode, numParents: number): RuleMode {
-  if (numParents < 2) return 'asymmetric'
-  if (numParents < 3 && mode === 'unordered') return 'asymmetric'
-  return mode
-}
-
 export function setNumParents(n: number) {
-  const half = Math.floor((n - 1) / 2)
   setStore(produce(s => {
     s.config.numParents = n
-    s.ruleMode = clampRuleMode(s.ruleMode, n)
     s.config.rules = resizeRules(s.config.rules, n, s.config.numStates, s.ruleMode)
-    s.config.padLeft = new Array(half).fill(0)
-    s.config.padRight = new Array(n - 1 - half).fill(0)
+    s.config.initial = new Array(2 * n - 1).fill(0)
+    if (n > 2) {
+      s.config.initial[n - 1] = 1
+    }
+    s.config.padLeft = new Array(n - 1).fill(0)
+    s.config.padRight = new Array(n - 1).fill(0)
   }))
 }
 
@@ -146,10 +142,6 @@ export function randomizeRules() {
 
 export function computedRuleCount(): number {
   return displayRuleCount(store.config.numParents, store.config.numStates, store.ruleMode)
-}
-
-export function expectedFullRuleCount(): number {
-  return fullRuleCount(store.config.numParents, store.config.numStates)
 }
 
 export function setInitial(cells: number[]) {
