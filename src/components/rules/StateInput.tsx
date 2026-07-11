@@ -1,4 +1,4 @@
-import { store, activePalette } from '../../store'
+import { store, activePalette, setSelectedState } from '../../store'
 import styles from './StateInput.module.css'
 
 export default function StateInput(props: {
@@ -11,7 +11,14 @@ export default function StateInput(props: {
   const editable = () => props.onEdit != null
 
   function handleClick() {
-    props.onEdit?.((props.value + 1) % store.config.numStates)
+    if (!editable()) return
+    const selected = store.selectedState
+    if (selected >= 0 && selected !== props.value) {
+      props.onEdit?.(selected)
+    } else {
+      setSelectedState(-1)
+      props.onEdit?.((props.value + 1) % store.config.numStates)
+    }
   }
 
   const shared = () => ({

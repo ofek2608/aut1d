@@ -17,11 +17,11 @@ export const CUSTOM_PALETTE = 'custom'
 
 export const PALETTES: Record<string, string[]> = {
   classic:  ['#da1776', '#a2fc25', '#2cabe6', '#da9617', '#f4a261', '#264653', '#6a4c93', '#1982c4', '#8ac926', '#ff595e', '#ffca3a', '#ffd6a5', '#caffbf', '#a8dadc'],
-  pastel:   ['#fdf4ff', '#ffd6ff', '#c8b6ff', '#b8c0ff', '#bbd0ff', '#a0c4ff', '#9bf6ff', '#caffbf', '#fdffb6', '#ffadad', '#ffc6ff', '#bde0fe', '#a2d2ff', '#cdb4db', '#ffc8dd', '#ffafcc'],
+  pastel:   ['#6eb5ff', '#e8789a', '#7bc96f', '#f7b267', '#b088f9', '#ffe066', '#4ecdc4', '#ff6b8a', '#95d5b2', '#cdb4db', '#ffa07a', '#87ceeb', '#dda0dd', '#98d8c8', '#f0a0a0', '#a0c4e8'],
   retro:    ['#000000', '#ffffff', '#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#800000', '#008000', '#000080', '#808000', '#800080', '#008080', '#c0c0c0', '#aa5500'],
-  ocean:    ['#03045e', '#023e8a', '#0077b6', '#0096c7', '#00b4d8', '#48cae4', '#90e0ef', '#caf0f8', '#e0fbfc', '#98c1d9', '#3d5a80', '#293241', '#1b4332', '#2d6a4f', '#40916c', '#52b788'],
-  fire:     ['#03071e', '#370617', '#6a040f', '#9d0208', '#d00000', '#dc2f02', '#e85d04', '#f48c06', '#faa307', '#ffba08', '#ffe169', '#fdf4b2', '#fcf6bd', '#f19c79', '#c77dff', '#a44a3f'],
-  mono:     ['#000000', '#111111', '#222222', '#333333', '#555555', '#777777', '#999999', '#aaaaaa', '#bbbbbb', '#cccccc', '#dddddd', '#eeeeee', '#ffffff', '#e8d5b7', '#c9b99a', '#a89070'],
+  ocean:    ['#ff6b6b', '#0077b6', '#06d6a0', '#ffd166', '#03045e', '#00b4d8', '#fb5607', '#8338ec', '#2a9d8f', '#ef476f', '#118ab2', '#e9d8a6', '#48cae4', '#264653', '#073b4c', '#caf0f8'],
+  fire:     ['#cc0000', '#ffd700', '#4169e1', '#228b22', '#1a1a1a', '#ff4500', '#9400d3', '#ffffcc', '#4a0000', '#ff8c00', '#00ced1', '#ff1493', '#2f4f4f', '#ffa500', '#8b0000', '#ff6347'],
+  mono:     ['#000000', '#ffffff', '#808080', '#404040', '#c0c0c0', '#1f2420', '#e8e8e8', '#595959', '#2d3330', '#b3b3b3', '#524a4a', '#4a524a', '#999999', '#262626', '#d6d6d6', '#737373'],
 }
 
 const DEFAULT_BATCH = 500
@@ -57,7 +57,7 @@ const [store, setStore] = createStore<State>({
   customColors: defaultCustomColors(DEFAULT_CONFIG.numStates),
   selectedCustomColor: 0,
   rows: [],
-  selectedState: 0,
+  selectedState: -1,
   ruleMode: 'symmetric',
 })
 
