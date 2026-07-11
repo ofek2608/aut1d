@@ -1,9 +1,8 @@
-import { store, setNumParents, setPadLeft, setPadRight, setRuleMode, randomizeRules, computedRuleCount, expectedFullRuleCount, PALETTES, type RuleMode } from '../store'
-import { Index, Show } from 'solid-js'
+import { store, setNumParents, setRuleMode, randomizeRules, computedRuleCount, expectedFullRuleCount, type RuleMode } from '../store'
+import { Show } from 'solid-js'
 import RulesGrid from './RulesGrid'
-import InitialPatternEditor from './InitialPatternEditor'
+import StateListEditor from './StateListEditor'
 import StatePaletteGrid from './StateGrid'
-import gridStyles from './RulesGrid.module.css'
 import styles from './RulesPanel.module.css'
 
 function RuleModeCell(props: { mode: RuleMode; icon: string; label: string }) {
@@ -38,42 +37,6 @@ function RandomizeButton() {
   )
 }
 
-function PadEditor(props: { label: string; cells: number[]; onChange: (c: number[]) => void }) {
-  const palette = () => PALETTES[store.palette] ?? PALETTES['classic']
-  function cycle(i: number) {
-    const c = [...props.cells]
-    c[i] = (c[i] + 1) % store.config.numStates
-    props.onChange(c)
-  }
-  function add() { props.onChange([...props.cells, 0]) }
-  function remove() {
-    if (props.cells.length === 0) return
-    props.onChange(props.cells.slice(0, -1))
-  }
-  return (
-    <div class="pad-editor">
-      <span class="pad-label">{props.label}</span>
-      <div class="pad-cells">
-        <Index each={props.cells}>
-          {(s, i) => (
-            <div
-              class={gridStyles.cell}
-              style={{ background: palette()[s()] ?? '#888', cursor: 'pointer' }}
-              onClick={() => cycle(i)}
-            />
-          )}
-        </Index>
-      </div>
-      <button class="icon-btn" onClick={remove} disabled={props.cells.length === 0} aria-label="Remove pad cell" title="Remove pad cell">
-        <i class="fa-solid fa-minus" aria-hidden="true" />
-      </button>
-      <button class="icon-btn" onClick={add} aria-label="Add pad cell" title="Add pad cell">
-        <i class="fa-solid fa-plus" aria-hidden="true" />
-      </button>
-    </div>
-  )
-}
-
 export default function RulesPanel() {
   return (
     <div class="panel rules-panel">
@@ -83,7 +46,7 @@ export default function RulesPanel() {
       </h2>
 
       <section class="panel-section">
-      <div class="section-header">States ({store.config.numStates})</div>
+        <div class="section-header">States ({store.config.numStates})</div>
         <StatePaletteGrid />
       </section>
 
@@ -117,14 +80,8 @@ export default function RulesPanel() {
       </section>
 
       <section class="panel-section">
-        <div class="section-header">Padding</div>
-        <PadEditor label="Left" cells={store.config.padLeft} onChange={setPadLeft} />
-        <PadEditor label="Right" cells={store.config.padRight} onChange={setPadRight} />
-      </section>
-
-      <section class="panel-section">
-        <div class="section-header">Initial ({store.config.initial.length} cells)</div>
-        <InitialPatternEditor />
+        <div class="section-header">Pattern</div>
+        <StateListEditor />
       </section>
     </div>
   )

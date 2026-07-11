@@ -17,24 +17,3 @@
   justify-content: center;
 }
 
-.cell {
-  width: 16px;
-  height: 16px;
-  border-radius: 2px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  flex-shrink: 0;
-}
-
-.output {
-  width: 16px;
-  height: 16px;
-  border-radius: 2px;
-  border: 1px solid var(--accent);
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: transform 0.1s;
-}
-
-.output:hover {
-  transform: scale(1.2);
-}

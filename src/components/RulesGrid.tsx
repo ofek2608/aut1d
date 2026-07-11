@@ -1,11 +1,10 @@
 import { For, Index, createMemo } from 'solid-js'
-import { store, setRule, PALETTES } from '../store'
+import { store, setRule } from '../store'
 import { decodeNeighborhood, displayRuleIndices } from '../rules'
+import StateInput from './StateInput'
 import styles from './RulesGrid.module.css'
 
 export default function RulesGrid() {
-  const palette = () => PALETTES[store.palette] ?? PALETTES['classic']
-
   const displayIndices = createMemo(() =>
     displayRuleIndices(store.config.numParents, store.config.numStates, store.ruleMode),
   )
@@ -22,19 +21,14 @@ export default function RulesGrid() {
             <div class={styles.entry}>
               <div class={styles.neighborhood}>
                 <Index each={neighborhood()}>
-                  {(s) => (
-                    <div
-                      class={styles.cell}
-                      style={{ background: palette()[s()] ?? '#888' }}
-                    />
-                  )}
+                  {(state) => <StateInput value={state()} />}
                 </Index>
               </div>
-              <div
-                class={styles.output}
-                style={{ background: palette()[outputState()] ?? '#888' }}
+              <StateInput
+                variant="output"
+                value={outputState()}
+                onEdit={newState => setRule(ruleIndex, newState)}
                 title={`Rule ${ruleIndex}: click to cycle (currently ${outputState()})`}
-                onClick={() => setRule(ruleIndex, (outputState() + 1) % store.config.numStates)}
               />
             </div>
           )
