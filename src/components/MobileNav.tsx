@@ -24,13 +24,7 @@ export default function MobileNav(props: Props) {
         onClick={toggleLeft}
         aria-label="Toggle rules panel"
       >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="3" y="3" width="7" height="7" rx="1"/>
-          <rect x="3" y="14" width="7" height="7" rx="1"/>
-          <line x1="14" y1="6" x2="21" y2="6"/>
-          <line x1="14" y1="12" x2="21" y2="12"/>
-          <line x1="14" y1="18" x2="21" y2="18"/>
-        </svg>
+        <i class="fa-solid fa-list-check" aria-hidden="true" />
         Rules
       </button>
       <button
@@ -38,11 +32,7 @@ export default function MobileNav(props: Props) {
         onClick={toggleRight}
         aria-label="Toggle view panel"
       >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="3"/>
-          <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
-          <path d="M4.93 4.93a10 10 0 0 0 0 14.14"/>
-        </svg>
+        <i class="fa-solid fa-palette" aria-hidden="true" />
         View
       </button>
     </nav>

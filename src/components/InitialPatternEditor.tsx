@@ -32,8 +32,12 @@ export default function InitialPatternEditor() {
         </Index>
       </div>
       <div class="initial-controls">
-        <button class="icon-btn" onClick={removeCell} disabled={store.config.initial.length <= 1}>−</button>
-        <button class="icon-btn" onClick={addCell}>+</button>
+        <button class="icon-btn" onClick={removeCell} disabled={store.config.initial.length <= 1} aria-label="Remove cell" title="Remove cell">
+          <i class="fa-solid fa-minus" aria-hidden="true" />
+        </button>
+        <button class="icon-btn" onClick={addCell} aria-label="Add cell" title="Add cell">
+          <i class="fa-solid fa-plus" aria-hidden="true" />
+        </button>
       </div>
     </div>
   )

@@ -253,9 +253,15 @@ export default function CanvasView() {
         onTouchEnd={onTouchEnd}
       />
       <div class="canvas-controls">
-        <button class="ctrl-btn" onClick={zoomIn}  title="Zoom in">+</button>
-        <button class="ctrl-btn" onClick={zoomOut} title="Zoom out">−</button>
-        <button class="ctrl-btn ctrl-home" onClick={resetView} title="Reset view">⌂</button>
+        <button class="ctrl-btn" onClick={zoomIn} aria-label="Zoom in" title="Zoom in">
+          <i class="fa-solid fa-magnifying-glass-plus" aria-hidden="true" />
+        </button>
+        <button class="ctrl-btn" onClick={zoomOut} aria-label="Zoom out" title="Zoom out">
+          <i class="fa-solid fa-magnifying-glass-minus" aria-hidden="true" />
+        </button>
+        <button class="ctrl-btn" onClick={resetView} aria-label="Reset view" title="Reset view">
+          <i class="fa-solid fa-house" aria-hidden="true" />
+        </button>
       </div>
     </div>
   )

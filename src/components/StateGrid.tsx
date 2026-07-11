@@ -19,15 +19,18 @@ function StatePaletteGridCell(props: { state: number }) {
   );
 }
 
-function ChangeNumStatesButton(props: { text: string, diff: number }) {
+function ChangeNumStatesButton(props: { icon: string; diff: number; label: string }) {
   return (
-    <input
-      class={styles.statePaletteGridButton}
+    <button
       type="button"
-      value={props.text}
+      class={styles.statePaletteGridButton}
       onClick={() => setNumStates(store.config.numStates + props.diff)}
-    />
-  )
+      aria-label={props.label}
+      title={props.label}
+    >
+      <i class={`fa-solid fa-${props.icon}`} aria-hidden="true" />
+    </button>
+  );
 }
 
 export default function StatePaletteGrid() {
@@ -36,8 +39,8 @@ export default function StatePaletteGrid() {
       <For each={Array.from({ length: store.config.numStates }, (_, index) => index)}>
         {state => <StatePaletteGridCell state={state} />}
       </For>
-      <ChangeNumStatesButton text="+" diff={1} />
-      <ChangeNumStatesButton text="-" diff={-1} />
+      <ChangeNumStatesButton icon="minus" diff={-1} label="Remove state" />
+      <ChangeNumStatesButton icon="plus" diff={1} label="Add state" />
     </div>
   )
 }

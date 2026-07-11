@@ -32,7 +32,9 @@ export default function RulesGrid() {
                   )}
                 </Index>
               </div>
-              <div class="rule-arrow">→</div>
+              <div class="rule-arrow" aria-hidden="true">
+                <i class="fa-solid fa-arrow-right" />
+              </div>
               <div
                 class="rule-output"
                 style={{ background: palette()[outputState] ?? '#888' }}

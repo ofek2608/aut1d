@@ -7,7 +7,10 @@ const PALETTE_NAMES = Object.keys(PALETTES)
 export default function ViewPanel() {
   return (
     <div class="panel view-panel">
-      <h2 class="panel-title">View</h2>
+      <h2 class="panel-title">
+        <i class="fa-solid fa-palette" aria-hidden="true" />
+        View
+      </h2>
 
       <section class="panel-section">
         <div class="section-header">Palette</div>
@@ -39,8 +42,10 @@ export default function ViewPanel() {
               <button
                 class={`align-btn${store.alignment === a ? ' active' : ''}`}
                 onClick={() => setAlignment(a)}
+                aria-label={`Align ${a}`}
+                title={a[0].toUpperCase() + a.slice(1)}
               >
-                {a[0].toUpperCase() + a.slice(1)}
+                <i class={`fa-solid fa-align-${a}`} aria-hidden="true" />
               </button>
             )}
           </For>

@@ -30,8 +30,12 @@ function PadEditor(props: { label: string; cells: number[]; onChange: (c: number
           )}
         </Index>
       </div>
-      <button class="icon-btn" onClick={remove} disabled={props.cells.length === 0}>−</button>
-      <button class="icon-btn" onClick={add}>+</button>
+      <button class="icon-btn" onClick={remove} disabled={props.cells.length === 0} aria-label="Remove pad cell" title="Remove pad cell">
+        <i class="fa-solid fa-minus" aria-hidden="true" />
+      </button>
+      <button class="icon-btn" onClick={add} aria-label="Add pad cell" title="Add pad cell">
+        <i class="fa-solid fa-plus" aria-hidden="true" />
+      </button>
     </div>
   )
 }
@@ -39,7 +43,10 @@ function PadEditor(props: { label: string; cells: number[]; onChange: (c: number
 export default function RulesPanel() {
   return (
     <div class="panel rules-panel">
-      <h2 class="panel-title">Rules</h2>
+      <h2 class="panel-title">
+        <i class="fa-solid fa-list-check" aria-hidden="true" />
+        Rules
+      </h2>
 
       <section class="panel-section">
       <div class="section-header">States ({store.config.numStates})</div>
