@@ -1,4 +1,4 @@
-import { store, setNumParents, setRuleMode, randomizeRules, computedRuleCount, expectedFullRuleCount, type RuleMode } from '../store'
+import { store, setNumParents, setRuleMode, randomizeRules, computedRuleCount, expectedFullRuleCount, type RuleMode } from '../../store'
 import { Show } from 'solid-js'
 import RulesGrid from './RulesGrid'
 import StateListEditor from './StateListEditor'

@@ -1,4 +1,4 @@
-import { store, PALETTES } from '../store'
+import { store, PALETTES } from '../../store'
 import styles from './StateInput.module.css'
 
 export default function StateInput(props: {

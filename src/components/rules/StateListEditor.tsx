@@ -1,5 +1,5 @@
 import { Index } from 'solid-js'
-import { store, setPadLeft, setPadRight, setInitial } from '../store'
+import { store, setPadLeft, setPadRight, setInitial } from '../../store'
 import StateInput from './StateInput'
 import styles from './StateListEditor.module.css'
 

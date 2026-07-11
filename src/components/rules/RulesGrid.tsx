@@ -1,6 +1,6 @@
 import { For, Index, createMemo } from 'solid-js'
-import { store, setRule } from '../store'
-import { decodeNeighborhood, displayRuleIndices } from '../rules'
+import { store, setRule } from '../../store'
+import { decodeNeighborhood, displayRuleIndices } from '../../rules'
 import StateInput from './StateInput'
 import styles from './RulesGrid.module.css'
 

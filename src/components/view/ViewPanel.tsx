@@ -1,6 +1,5 @@
 import { For } from 'solid-js'
-import { store, setAlignment, setPalette, PALETTES } from '../store'
-import type { Alignment } from '../store'
+import { store, setAlignment, setPalette, PALETTES, type Alignment } from '../../store'
 
 const PALETTE_NAMES = Object.keys(PALETTES)
 
