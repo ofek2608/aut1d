@@ -1,5 +1,7 @@
 # Aut1D
 
+[![Live Site](https://img.shields.io/badge/Live%20Site-ofekn.com%2Faut1d-f3f4f6?style=for-the-badge&logo=googlechrome&logoColor=f3f4f6&labelColor=16171d)](http://ofekn.com/aut1d)
+
 An interactive playground for one-dimensional cellular automata. Define states and rules, paint an initial pattern, and watch it evolve row by row.
 
 ## Features
