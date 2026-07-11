@@ -1,0 +1,259 @@
+import { batch, createEffect, createMemo, createSignal, onCleanup, onMount, untrack } from 'solid-js'
+import { store, regenerateRows, extendRows, PALETTES } from '../store'
+// rowWorldStart not needed: per-row alignment uses row.length directly
+
+const BASE_CELL_SIZE = 4
+const MIN_ZOOM = 0.12   // ~0.5px/cell
+const MAX_ZOOM = 8      // ~32px/cell
+const REGEN_THRESHOLD = 500
+
+export default function CanvasView() {
+  let containerRef!: HTMLDivElement
+  let canvasRef!: HTMLCanvasElement
+  let rafId = 0
+
+  const [canvasW, setCanvasW] = createSignal(0)
+  const [canvasH, setCanvasH] = createSignal(0)
+  const [panX, setPanX] = createSignal(0)
+  const [panY, setPanY] = createSignal(0)
+  const [zoom, setZoom] = createSignal(1.0)
+
+  const cellSize = createMemo(() => Math.max(0.5, BASE_CELL_SIZE * zoom()))
+
+  // Per-row reference point for alignment
+  const refX = createMemo(() => {
+    const a = store.alignment
+    const w = canvasW()
+    return a === 'left' ? 0 : a === 'right' ? w : w / 2
+  })
+
+  // Pan state
+  let dragging = false
+  let lastX = 0, lastY = 0
+
+  // Pinch state
+  let pinching = false
+  let lastDist = 0, lastMidX = 0, lastMidY = 0
+
+  function getPos(clientX: number, clientY: number) {
+    const rect = containerRef.getBoundingClientRect()
+    return { x: clientX - rect.left, y: clientY - rect.top }
+  }
+
+  function applyZoom(factor: number, cx: number, cy: number) {
+    const zOld = zoom()
+    const zNew = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, zOld * factor))
+    const ratio = zNew / zOld
+    const rx = refX()
+    batch(() => {
+      setZoom(zNew)
+      setPanX(px => cx - rx - (cx - rx - px) * ratio)
+      setPanY(py => cy - (cy - py) * ratio)
+    })
+  }
+
+  // Mouse
+  function onMouseDown(e: MouseEvent) {
+    dragging = true
+    lastX = e.clientX
+    lastY = e.clientY
+  }
+  function onMouseMove(e: MouseEvent) {
+    if (!dragging) return
+    setPanX(x => x + e.clientX - lastX)
+    setPanY(y => y + e.clientY - lastY)
+    lastX = e.clientX
+    lastY = e.clientY
+    maybeExtend()
+  }
+  function onMouseUp() { dragging = false }
+
+  function onWheel(e: WheelEvent) {
+    e.preventDefault()
+    let delta = e.deltaY
+    if (e.deltaMode === 1) delta *= 20
+    if (e.deltaMode === 2) delta *= 600
+    const factor = Math.pow(1.001, -delta)
+    const { x, y } = getPos(e.clientX, e.clientY)
+    applyZoom(factor, x, y)
+  }
+
+  // Touch
+  function onTouchStart(e: TouchEvent) {
+    e.preventDefault()
+    if (e.touches.length === 1) {
+      pinching = false
+      dragging = true
+      lastX = e.touches[0].clientX
+      lastY = e.touches[0].clientY
+    } else if (e.touches.length === 2) {
+      dragging = false
+      pinching = true
+      const t0 = e.touches[0], t1 = e.touches[1]
+      lastDist = Math.hypot(t0.clientX - t1.clientX, t0.clientY - t1.clientY)
+      lastMidX = (t0.clientX + t1.clientX) / 2
+      lastMidY = (t0.clientY + t1.clientY) / 2
+    }
+  }
+
+  function onTouchMove(e: TouchEvent) {
+    e.preventDefault()
+    if (e.touches.length === 1 && dragging) {
+      const dx = e.touches[0].clientX - lastX
+      const dy = e.touches[0].clientY - lastY
+      lastX = e.touches[0].clientX
+      lastY = e.touches[0].clientY
+      setPanX(x => x + dx)
+      setPanY(y => y + dy)
+      maybeExtend()
+    } else if (e.touches.length === 2 && pinching) {
+      const t0 = e.touches[0], t1 = e.touches[1]
+      const dist = Math.hypot(t0.clientX - t1.clientX, t0.clientY - t1.clientY)
+      const midX = (t0.clientX + t1.clientX) / 2
+      const midY = (t0.clientY + t1.clientY) / 2
+      if (lastDist > 0) {
+        const { x, y } = getPos(midX, midY)
+        applyZoom(dist / lastDist, x, y)
+      }
+      setPanX(px => px + midX - lastMidX)
+      setPanY(py => py + midY - lastMidY)
+      lastDist = dist
+      lastMidX = midX
+      lastMidY = midY
+      maybeExtend()
+    }
+  }
+
+  function onTouchEnd(e: TouchEvent) {
+    if (e.touches.length === 0) { dragging = false; pinching = false }
+    else if (e.touches.length === 1) { pinching = false }
+  }
+
+  function maybeExtend() {
+    const cs = cellSize()
+    const totalH = store.rows.length * cs
+    const visibleBottom = -panY() + canvasH()
+    if (totalH < visibleBottom + canvasH() * 2) {
+      extendRows(store.rows.length + REGEN_THRESHOLD)
+    }
+  }
+
+  // Re-generate when automata config changes
+  createEffect(() => {
+    const c = store.config
+    void c.rules.slice()
+    void c.initial.slice()
+    void c.padLeft.slice()
+    void c.padRight.slice()
+    void c.numParents
+    void c.numStates
+    const target = untrack(() => Math.max(REGEN_THRESHOLD, Math.ceil(canvasH() / cellSize()) + REGEN_THRESHOLD))
+    regenerateRows(target)
+    batch(() => { setPanX(0); setPanY(0) })
+  })
+
+  // Ensure enough rows when canvas resizes
+  createEffect(() => {
+    const h = canvasH()
+    if (h === 0) return
+    const target = untrack(() => Math.ceil(h / cellSize()) + REGEN_THRESHOLD)
+    extendRows(target)
+  })
+
+  // ResizeObserver
+  onMount(() => {
+    const ro = new ResizeObserver(entries => {
+      const { width, height } = entries[0].contentRect
+      const w = Math.floor(width), h = Math.floor(height)
+      canvasRef.width = w
+      canvasRef.height = h
+      setCanvasW(w)
+      setCanvasH(h)
+    })
+    ro.observe(containerRef)
+    onCleanup(() => ro.disconnect())
+  })
+
+  // Draw
+  createEffect(() => {
+    const rows = store.rows
+    const cs = cellSize()
+    const palette = PALETTES[store.palette] ?? PALETTES['classic']
+    const px = panX()
+    const py = panY()
+    const w = canvasW()
+    const h = canvasH()
+    const rx = refX()
+    const alignment = store.alignment
+
+    cancelAnimationFrame(rafId)
+    rafId = requestAnimationFrame(() => {
+      const ctx = canvasRef?.getContext('2d')
+      if (!ctx || rows.length === 0 || w === 0 || h === 0) return
+
+      ctx.clearRect(0, 0, w, h)
+
+      const firstRow = Math.max(0, Math.floor(-py / cs))
+      const lastRow = Math.min(rows.length - 1, Math.ceil((h - py) / cs))
+
+      for (let g = firstRow; g <= lastRow; g++) {
+        const row = rows[g]
+        if (!row) continue
+        const rowLen = row.length
+
+        // Reference cell index for this row
+        const refI = alignment === 'left' ? 0
+          : alignment === 'right' ? rowLen - 1
+          : Math.floor(rowLen / 2)
+
+        // Visible cell range: rx + px + (i - refI) * cs in [0, w]
+        const iMin = Math.max(0, Math.floor(refI + (-rx - px) / cs))
+        const iMax = Math.min(rowLen - 1, Math.ceil(refI + (w - rx - px) / cs))
+        if (iMin > iMax) continue
+
+        const y = py + g * cs
+
+        let c = iMin
+        while (c <= iMax) {
+          const state = row[c]
+          let end = c + 1
+          while (end <= iMax && row[end] === state) end++
+          ctx.fillStyle = palette[state] ?? '#888888'
+          ctx.fillRect(rx + px + (c - refI) * cs, y, (end - c) * cs, cs)
+          c = end
+        }
+      }
+    })
+  })
+
+  onCleanup(() => cancelAnimationFrame(rafId))
+
+  function zoomIn()  { applyZoom(1.5, canvasW() / 2, canvasH() / 2) }
+  function zoomOut() { applyZoom(1 / 1.5, canvasW() / 2, canvasH() / 2) }
+  function resetView() { batch(() => { setPanX(0); setPanY(0); setZoom(1.0) }) }
+
+  return (
+    <div
+      ref={containerRef!}
+      class="canvas-container"
+      onMouseDown={onMouseDown}
+      onMouseMove={onMouseMove}
+      onMouseUp={onMouseUp}
+      onMouseLeave={onMouseUp}
+    >
+      <canvas
+        ref={canvasRef!}
+        class="automata-canvas"
+        onWheel={onWheel}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+      />
+      <div class="canvas-controls">
+        <button class="ctrl-btn" onClick={zoomIn}  title="Zoom in">+</button>
+        <button class="ctrl-btn" onClick={zoomOut} title="Zoom out">−</button>
+        <button class="ctrl-btn ctrl-home" onClick={resetView} title="Reset view">⌂</button>
+      </div>
+    </div>
+  )
+}
