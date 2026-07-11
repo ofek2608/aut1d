@@ -1,4 +1,5 @@
 import { Show } from 'solid-js'
+import AboutSection from '../AboutSection'
 import PaletteSelector from './PaletteSelector'
 import AlignmentSelector from './AlignmentSelector'
 import CustomPaletteEditor from './CustomPaletteEditor'
@@ -25,6 +26,8 @@ export default function ViewPanel() {
         <div class="section-header">Alignment</div>
         <AlignmentSelector />
       </section>
+
+      <AboutSection />
     </div>
   )
 }
