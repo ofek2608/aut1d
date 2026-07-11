@@ -183,8 +183,8 @@ export default function CanvasView() {
 
     cancelAnimationFrame(rafId)
     rafId = requestAnimationFrame(() => {
-      const ctx = canvasRef?.getContext('2d')
-      if (!ctx || rows.length === 0 || w === 0 || h === 0) return
+      const ctx = canvasRef?.getContext('2d')!
+      if (!ctx || rows.length === 0 || w === 0 || h === 0) return;
 
       ctx.clearRect(0, 0, w, h)
 

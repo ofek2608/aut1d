@@ -1,12 +1,11 @@
 import { createStore, produce } from 'solid-js/store'
 import { MAX_STATES, type AutomataConfig, type RuleMode } from './automata/config'
-import { automataStep, automataStepBatch } from './automata/step'
+import { automataStepBatch } from './automata/step'
 import {
   applyRuleMode,
   normalizeRules,
   resizeRulesForParents,
   getRuleCountForStates,
-  createRuleResolver,
 } from './automata/rules'
 import { randomInt } from './utils'
 import { parseConfigIdentifier } from './automata/identifier'
@@ -26,7 +25,7 @@ export const PALETTES: Record<string, string[]> = {
 
 const DEFAULT_BATCH = 500;
 
-const DEFAULT_CONFIG: AutomataConfig = parseConfigIdentifier('S2#231123');
+const DEFAULT_CONFIG: AutomataConfig = parseConfigIdentifier('S2#231123')!;
 
 interface State {
   config: AutomataConfig;
