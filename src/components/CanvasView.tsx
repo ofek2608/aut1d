@@ -20,13 +20,6 @@ export default function CanvasView() {
 
   const cellSize = createMemo(() => Math.max(0.5, BASE_CELL_SIZE * zoom()))
 
-  // Per-row reference point for alignment
-  const refX = createMemo(() => {
-    const a = store.alignment
-    const w = canvasW()
-    return a === 'left' ? 0 : a === 'right' ? w : w / 2
-  })
-
   // Pan state
   let dragging = false
   let lastX = 0, lastY = 0
@@ -44,10 +37,10 @@ export default function CanvasView() {
     const zOld = zoom()
     const zNew = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, zOld * factor))
     const ratio = zNew / zOld
-    const rx = refX()
+    const centerX = canvasW() / 2
     batch(() => {
       setZoom(zNew)
-      setPanX(px => cx - rx - (cx - rx - px) * ratio)
+      setPanX(px => cx - centerX - (cx - centerX - px) * ratio)
       setPanY(py => cy - (cy - py) * ratio)
     })
   }
@@ -178,13 +171,13 @@ export default function CanvasView() {
   createEffect(() => {
     const rows = store.rows
     const cs = cellSize()
-    const outline = Math.min(1, Math.floor(cs * 0.1));
+    const outline = cs < 10 ? 0 : 1;
     const palette = PALETTES[store.palette] ?? PALETTES['classic']
     const px = panX()
     const py = panY()
     const w = canvasW()
     const h = canvasH()
-    const rx = refX()
+    const rx = canvasW() / 2
     const alignment = store.alignment
 
     cancelAnimationFrame(rafId)
@@ -193,6 +186,17 @@ export default function CanvasView() {
       if (!ctx || rows.length === 0 || w === 0 || h === 0) return
 
       ctx.clearRect(0, 0, w, h)
+
+      function fillCell(x: number, y: number, state: number) {
+        ctx.fillStyle = palette[state] ?? '#888888';
+        const x1 = Math.round(x + outline);
+        const y1 = Math.round(y + outline);
+        const x2 = Math.round(x + cs - outline);
+        const y2 = Math.round(y + cs - outline);
+        const width = x2 - x1;
+        const height = y2 - y1;
+        ctx.fillRect(x1, y1, width, height)
+      }
 
       const firstRow = Math.max(0, Math.floor(-py / cs))
       const lastRow = Math.min(rows.length - 1, Math.ceil((h - py) / cs))
@@ -218,8 +222,7 @@ export default function CanvasView() {
         while (c <= iMax) {
           const state = row[c]
           let end = c + 1
-          ctx.fillStyle = palette[state] ?? '#888888'
-          ctx.fillRect(rx + px + (c - refI) * cs + outline, y + outline, (end - c) * cs - 2 * outline, cs - 2 * outline)
+          fillCell(rx + px + (c - refI) * cs, y, state)
           c = end
         }
       }

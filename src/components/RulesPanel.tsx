@@ -2,7 +2,6 @@ import { store, setNumParents, setNumStates, setPadLeft, setPadRight, PALETTES }
 import { Index } from 'solid-js'
 import RulesGrid from './RulesGrid'
 import InitialPatternEditor from './InitialPatternEditor'
-import PresetButtons from './PresetButtons'
 
 function PadEditor(props: { label: string; cells: number[]; onChange: (c: number[]) => void }) {
   const palette = () => PALETTES[store.palette] ?? PALETTES['classic']
@@ -60,11 +59,6 @@ export default function RulesPanel() {
             {[2, 3, 4, 5].map(n => <option value={n}>{n}</option>)}
           </select>
         </label>
-      </section>
-
-      <section class="panel-section">
-        <div class="section-header">Presets</div>
-        <PresetButtons />
       </section>
 
       <section class="panel-section">

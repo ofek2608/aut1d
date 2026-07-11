@@ -4,7 +4,7 @@ import { automataStep, type AutomataConfig } from './automata'
 export type Alignment = 'left' | 'center' | 'right'
 
 export const PALETTES: Record<string, string[]> = {
-  classic:  ['#ffffff', '#000000', '#e63946', '#457b9d', '#2a9d8f', '#e9c46a', '#f4a261', '#264653', '#6a4c93', '#1982c4', '#8ac926', '#ff595e', '#ffca3a', '#ffd6a5', '#caffbf', '#a8dadc'],
+  classic:  ['#da1776', '#a2fc25', '#2cabe6', '#da9617', '#f4a261', '#264653', '#6a4c93', '#1982c4', '#8ac926', '#ff595e', '#ffca3a', '#ffd6a5', '#caffbf', '#a8dadc'],
   pastel:   ['#fdf4ff', '#ffd6ff', '#c8b6ff', '#b8c0ff', '#bbd0ff', '#a0c4ff', '#9bf6ff', '#caffbf', '#fdffb6', '#ffadad', '#ffc6ff', '#bde0fe', '#a2d2ff', '#cdb4db', '#ffc8dd', '#ffafcc'],
   retro:    ['#000000', '#ffffff', '#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#800000', '#008000', '#000080', '#808000', '#800080', '#008080', '#c0c0c0', '#aa5500'],
   ocean:    ['#03045e', '#023e8a', '#0077b6', '#0096c7', '#00b4d8', '#48cae4', '#90e0ef', '#caf0f8', '#e0fbfc', '#98c1d9', '#3d5a80', '#293241', '#1b4332', '#2d6a4f', '#40916c', '#52b788'],
@@ -16,9 +16,9 @@ const DEFAULT_BATCH = 500
 
 
 const DEFAULT_CONFIG: AutomataConfig = {
-  numParents: 3,
-  numStates: 2,
-  rules: [0, 1, 1, 1, 0, 1, 1, 0],
+  numParents: 2,
+  numStates: 3,
+  rules: [1, 1, 1, 1, 0, 1, 1, 0, 0],
   initial: [0],
   padLeft: [0],
   padRight: [0],
@@ -103,12 +103,6 @@ export function setAlignment(a: Alignment) {
 
 export function setPalette(name: string) {
   if (name in PALETTES) setStore('palette', name)
-}
-
-export function applyPreset(name: string) {
-  if (name === 'rule110') setStore('config', { numParents: 3, numStates: 2, rules: [0, 1, 1, 1, 0, 1, 1, 0], initial: [0,0,1,0,0], padLeft: [0, 0], padRight: [0, 0] })
-  else if (name === 'rule30') setStore('config', { numParents: 3, numStates: 2, rules: [0, 1, 1, 1, 1, 0, 0, 0], initial: [0,0,1,0,0], padLeft: [0, 0], padRight: [0, 0] })
-  else if (name === 'rule90') setStore('config', { numParents: 3, numStates: 2, rules: [0, 1, 0, 1, 1, 0, 1, 0], initial: [0,0,1,0,0], padLeft: [0, 0], padRight: [0, 0] })
 }
 
 export { store }
