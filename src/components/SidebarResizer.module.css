@@ -1,0 +1,28 @@
+.resizer {
+  flex-shrink: 0;
+  width: 5px;
+  margin: 0 -2px;
+  cursor: col-resize;
+  background: transparent;
+  position: relative;
+  z-index: 5;
+  outline: none;
+  transition: var(--transition-hover);
+}
+
+.resizer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  left: 2px;
+  width: 1px;
+  background: var(--border);
+}
+
+.resizer:hover {
+  outline: var(--outline-hover);
+}
+
+.resizer:hover::after {
+  background: var(--color-outline-hover);
+}

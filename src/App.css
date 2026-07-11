@@ -1,14 +1,26 @@
 /* Layout */
 .app-layout {
-  display: grid;
-  grid-template-columns: 260px 1fr 240px;
-  grid-template-rows: 100svh;
+  display: flex;
+  height: 100svh;
   overflow: hidden;
 }
 
-.panel-left  { grid-column: 1; overflow-y: auto; border-right: var(--border-width) solid var(--border); }
-.panel-center { grid-column: 2; position: relative; overflow: hidden; }
-.panel-right  { grid-column: 3; overflow-y: auto; border-left: var(--border-width) solid var(--border); }
+.panel-left {
+  flex-shrink: 0;
+  overflow-y: auto;
+}
+
+.panel-center {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.panel-right {
+  flex-shrink: 0;
+  overflow-y: auto;
+}
 
 /* Panel shared */
 .panel {
