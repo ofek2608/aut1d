@@ -45,5 +45,5 @@
 }
 
 .actionCell {
-  border: var(--border-width) solid var(--border);
+  border: none;
 }

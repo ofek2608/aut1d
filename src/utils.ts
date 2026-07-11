@@ -7,3 +7,7 @@ export function binomial(n: number, k: number): number {
   }
   return Math.round(result)
 }
+
+export function randomInt(max: number): number {
+  return Math.floor(Math.random() * max);
+}

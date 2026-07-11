@@ -3,11 +3,11 @@ import { MAX_STATES, type AutomataConfig, type RuleMode } from './automata/confi
 import { automataStep } from './automata/step'
 import {
   applyRuleMode,
-  displayRuleCount,
-  resizeRules,
   normalizeRules,
+  resizeRulesForParents,
   getRuleCountForStates,
 } from './automata/rules'
+import { randomInt } from './utils'
 
 export type Alignment = 'left' | 'center' | 'right'
 
@@ -99,10 +99,9 @@ export function applyConfig(config: AutomataConfig) {
 
 export function setNumParents(n: number) {
   setStore(produce(s => {
-    const prevNumParents = s.config.numParents
-    const { numStates, ruleMode, rules } = s.config
+    const { numStates, ruleMode } = s.config
     s.config.numParents = n
-    s.config.rules = resizeRules(rules, n, numStates, ruleMode, prevNumParents, numStates, ruleMode)
+    s.config.rules = resizeRulesForParents(n, numStates, ruleMode)
     s.config.initial = new Array(2 * n - 1).fill(0)
     if (n > 2) {
       s.config.initial[n - 1] = 1
@@ -118,7 +117,7 @@ export function setNumStates(n: number) {
     const { numParents, numStates, ruleMode, rules } = s.config
     if (clamped === numStates) return
     s.config.numStates = clamped
-    s.config.rules = resizeRules(rules, numParents, clamped, ruleMode, numParents, numStates, ruleMode)
+    s.config.rules = normalizeRules(rules, numParents, clamped, ruleMode)
     s.customColors = defaultCustomColors(clamped).map((color, i) => s.customColors[i] ?? color)
     if (s.selectedCustomColor >= clamped) s.selectedCustomColor = Math.max(0, clamped - 1)
   }))
@@ -141,12 +140,12 @@ export function randomizeRules() {
   const { numParents, numStates, ruleMode } = store.config
   setStore(produce(s => {
     const count = getRuleCountForStates(ruleMode, numParents, numStates)
-    s.config.rules = Array.from({ length: count }, () => Math.floor(Math.random() * numStates))
+    s.config.rules = Array.from({ length: count }, () => randomInt(numStates))
   }))
 }
 
 export function computedRuleCount(): number {
-  return displayRuleCount(store.config.numParents, store.config.numStates, store.config.ruleMode)
+  return getRuleCountForStates(store.config.ruleMode, store.config.numParents, store.config.numStates)
 }
 
 export function setInitial(cells: number[]) {

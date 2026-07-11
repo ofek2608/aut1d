@@ -1,4 +1,5 @@
-import { store, setNumParents, setRuleMode, randomizeRules, computedRuleCount, type RuleMode } from '../../store'
+import { store, setNumParents, setRuleMode, randomizeRules, computedRuleCount } from '../../store'
+import type { RuleMode } from '../../automata/config'
 import { Show } from 'solid-js'
 import ConfigIdentifier from './ConfigIdentifier'
 import RulesGrid from './RulesGrid'

@@ -1,4 +1,4 @@
-import { binomial } from '../utils';
+import { binomial, randomInt } from '../utils';
 import { MAX_STATES, type RuleMode } from './config';
 
 function neighborhoodsEqual(a: number[], b: number[]): boolean {
@@ -9,41 +9,38 @@ function neighborhoodKey(neighborhood: number[]): string {
   return neighborhood.join(',')
 }
 
-export function maxDigit(neighborhood: number[]): number {
-  return neighborhood.reduce((max, digit) => Math.max(max, digit), 0)
-}
-
 export function compareNeighborhoods(a: number[], b: number[]): number {
-  const maxA = maxDigit(a)
-  const maxB = maxDigit(b)
-  if (maxA !== maxB) return maxA - maxB
+  const maxA = Math.max(...a);
+  const maxB = Math.max(...b);
+  if (maxA !== maxB) return maxA - maxB;
 
   for (let i = 0; i < a.length; i++) {
-    if (a[i] !== b[i]) return a[i] - b[i]
+    if (a[i] !== b[i]) return a[i] - b[i];
   }
-  return 0
-}
-
-function isSortedNonDecreasing(digits: number[]): boolean {
-  for (let i = 1; i < digits.length; i++) {
-    if (digits[i] < digits[i - 1]) return false
-  }
-  return true
+  return 0;
 }
 
 function isSymmetricCanonical(digits: number[]): boolean {
-  if (digits.length <= 1) return true
-  return digits[0] <= digits[digits.length - 1]
+  for (let i = 0; 2 * i < digits.length; i++) {
+    const a = digits[i];
+    const b = digits[digits.length - 1 - i]
+    if (a < b) return true;
+    if (a > b) return false;
+  }
+  return true;
 }
 
 function matchesMode(digits: number[], mode: RuleMode): boolean {
   switch (mode) {
     case 'asymmetric':
-      return true
+      return true;
     case 'symmetric':
-      return isSymmetricCanonical(digits)
+      return isSymmetricCanonical(digits);
     case 'unordered':
-      return isSortedNonDecreasing(digits)
+      for (let i = 1; i < digits.length; i++) {
+        if (digits[i] < digits[i - 1]) return false;
+      }
+      return true;
   }
 }
 
@@ -76,11 +73,11 @@ export function orderedDisplayNeighborhoods(
   numStates: number,
   mode: RuleMode,
 ): number[][] {
-  const result: number[][] = []
+  const result: number[][] = [];
   for (let maxState = 0; maxState < numStates; maxState++) {
-    result.push(...neighborhoodsWithMax(numParents, maxState, mode))
+    result.push(...neighborhoodsWithMax(numParents, maxState, mode));
   }
-  return result
+  return result;
 }
 
 export function getNeighborhoodAtIndex(
@@ -97,9 +94,17 @@ export function getRuleIndex(
   numParents: number,
   mode: RuleMode,
 ): number {
+  // switch (mode) {
+  //   case 'asymmetric':
+  //     let result = 0;
+  //   case 'symmetric':
+  //     return isSymmetricCanonical(neighborhood.slice(0, numParents)) ? neighborhood.slice(0, numParents).join(',') : neighborhood.slice(0, numParents).reverse().join(',');
+  //   case 'unordered':
+  //     return neighborhood.slice(0, numParents).sort((a, b) => a - b).join(',');
+  // }
   const target = neighborhood.slice(0, numParents)
   let index = 0
-  const targetMax = maxDigit(target)
+  const targetMax = Math.max(...target);
 
   for (let maxState = 0; maxState <= targetMax; maxState++) {
     for (const candidate of neighborhoodsWithMax(numParents, maxState, mode)) {
@@ -111,28 +116,17 @@ export function getRuleIndex(
   return -1
 }
 
-export function symmetricCanonical(neighborhood: number[]): number[] {
-  if (neighborhood.length <= 1 || isSymmetricCanonical(neighborhood)) {
-    return neighborhood.slice()
-  }
-  return [...neighborhood].reverse()
-}
-
-export function unorderedCanonical(neighborhood: number[]): number[] {
-  return [...neighborhood].sort((a, b) => a - b)
-}
-
 export function canonicalNeighborhood(
   neighborhood: number[],
   mode: RuleMode,
 ): number[] {
   switch (mode) {
     case 'asymmetric':
-      return neighborhood.slice()
+      return neighborhood.slice();
     case 'symmetric':
-      return symmetricCanonical(neighborhood)
+      return isSymmetricCanonical(neighborhood) ? neighborhood.slice() : neighborhood.slice().reverse();
     case 'unordered':
-      return unorderedCanonical(neighborhood)
+      return [...neighborhood].sort((a, b) => a - b);
   }
 }
 
@@ -160,7 +154,7 @@ function uniqueNeighborhoods(neighborhoods: number[][]): number[][] {
   return result
 }
 
-export function equivalentNeighborhoods(
+function equivalentNeighborhoods(
   neighborhood: number[],
   mode: RuleMode,
 ): number[][] {
@@ -183,14 +177,13 @@ export function getRuleCountForStates(
   numParents: number,
   numStates: number,
 ): number {
-  
   switch (ruleMode) {
     case 'asymmetric':
-      return numStates ** numParents
+      return numStates ** numParents;
     case 'symmetric':
-      return (numStates ** numParents + numStates ** Math.ceil(numParents / 2)) / 2
+      return (numStates ** numParents + numStates ** Math.ceil(numParents / 2)) / 2;
     case 'unordered':
-      return binomial(numStates, numParents)
+      return binomial(numStates + numParents - 1, numParents);
   }
 }
 
@@ -217,10 +210,6 @@ export function getStateCountForRules(
   return numStates
 }
 
-export function displayRuleCount(numParents: number, numStates: number, mode: RuleMode): number {
-  return getRuleCountForStates(mode, numParents, numStates)
-}
-
 export function fullRuleCount(numParents: number, numStates: number): number {
   return numStates ** numParents
 }
@@ -244,6 +233,15 @@ function buildRuntimeLookup(
   return lookup
 }
 
+export function resizeRulesForParents(
+  numParents: number,
+  numStates: number,
+  mode: RuleMode,
+): number[] {
+  const newCount = getRuleCountForStates(mode, numParents, numStates);
+  return Array.from({ length: newCount }, () => randomInt(numStates))
+}
+
 export function applyRuleMode(
   rules: number[],
   numParents: number,
@@ -253,37 +251,32 @@ export function applyRuleMode(
 ): number[] {
   if (oldMode === newMode) return rules.slice()
 
-  const lookup = buildRuntimeLookup(rules, numParents, numStates, oldMode)
-  const nextNeighborhoods = orderedDisplayNeighborhoods(numParents, numStates, newMode)
+  const oldCount = getRuleCountForStates(oldMode, numParents, numStates)
+  const newCount = getRuleCountForStates(newMode, numParents, numStates)
+  const oldNeighborhoods = orderedDisplayNeighborhoods(numParents, numStates, oldMode)
+  const newNeighborhoods = orderedDisplayNeighborhoods(numParents, numStates, newMode)
 
-  return nextNeighborhoods.map(neighborhood => {
-    const canonical = canonicalNeighborhood(neighborhood, newMode)
-    return lookup.get(neighborhoodKey(canonical)) ?? 0
-  })
-}
-
-export function resizeRules(
-  rules: number[],
-  numParents: number,
-  numStates: number,
-  mode: RuleMode,
-  prevNumParents = numParents,
-  prevNumStates = numStates,
-  prevMode = mode,
-): number[] {
-  const newCount = displayRuleCount(numParents, numStates, mode)
-
-  if (numParents === prevNumParents && mode === prevMode) {
-    const next = rules.slice(0, newCount)
-    while (next.length < newCount) next.push(0)
-    return next
+  const oldValues = new Map<string, number>()
+  for (let i = 0; i < oldNeighborhoods.length; i++) {
+    oldValues.set(neighborhoodKey(oldNeighborhoods[i]), rules[i] ?? 0)
   }
 
-  const lookup = buildRuntimeLookup(rules, prevNumParents, prevNumStates, prevMode)
-  const nextNeighborhoods = orderedDisplayNeighborhoods(numParents, numStates, mode)
+  if (newCount < oldCount) {
+    return newNeighborhoods.map(neighborhood => {
+      const members = equivalentNeighborhoods(neighborhood, newMode)
+        .slice()
+        .sort(compareNeighborhoods)
+      for (const member of members) {
+        const value = oldValues.get(neighborhoodKey(member))
+        if (value !== undefined) return value
+      }
+      return 0
+    })
+  }
 
-  return nextNeighborhoods.map(neighborhood => {
-    const canonical = canonicalNeighborhood(neighborhood, mode)
+  const lookup = buildRuntimeLookup(rules, numParents, numStates, oldMode)
+  return newNeighborhoods.map(neighborhood => {
+    const canonical = canonicalNeighborhood(neighborhood, oldMode)
     return lookup.get(neighborhoodKey(canonical))
       ?? lookup.get(neighborhoodKey(neighborhood))
       ?? 0
@@ -296,8 +289,22 @@ export function normalizeRules(
   numStates: number,
   mode: RuleMode,
 ): number[] {
-  const count = displayRuleCount(numParents, numStates, mode)
-  const next = rules.slice(0, count)
-  while (next.length < count) next.push(0)
-  return next
+  const newCount = getRuleCountForStates(mode, numParents, numStates);
+
+  // Crop the rules to the new count
+  const next = rules.slice(0, newCount);
+
+  // Fill in the rest of the rules with random values
+  while (next.length < newCount) {
+    next.push(randomInt(numStates));
+  }
+
+  // Make sure the states are within the range of the new number of states
+  for (let i = 0; i < next.length; i++) {
+    if (next[i] >= numStates) {
+      next[i] = randomInt(numStates);
+    }
+  }
+
+  return next;
 }

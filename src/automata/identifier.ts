@@ -80,7 +80,7 @@ function defaultPattern(numParents: number) {
   return {
     padLeft: new Array(Math.max(0, numParents - 1)).fill(0),
     padRight: new Array(Math.max(0, numParents - 1)).fill(0),
-    initial: new Array(Math.max(1, 2 * numParents - 1)).fill(0),
+    initial: new Array(Math.max(1, 2 * (numParents - 1) - 1)).fill(0),
   }
 }
 
