@@ -1,13 +1,15 @@
 import { createStore, produce } from 'solid-js/store'
 import { MAX_STATES, type AutomataConfig, type RuleMode } from './automata/config'
-import { automataStep } from './automata/step'
+import { automataStep, automataStepBatch } from './automata/step'
 import {
   applyRuleMode,
   normalizeRules,
   resizeRulesForParents,
   getRuleCountForStates,
+  createRuleResolver,
 } from './automata/rules'
 import { randomInt } from './utils'
+import { parseConfigIdentifier } from './automata/identifier'
 
 export type Alignment = 'left' | 'center' | 'right'
 
@@ -22,17 +24,9 @@ export const PALETTES: Record<string, string[]> = {
   mono:     ['#000000', '#ffffff', '#808080', '#404040', '#c0c0c0', '#1f2420', '#e8e8e8', '#595959', '#2d3330', '#b3b3b3', '#524a4a', '#4a524a', '#999999', '#262626', '#d6d6d6', '#737373'],
 }
 
-const DEFAULT_BATCH = 500
+const DEFAULT_BATCH = 500;
 
-const DEFAULT_CONFIG: AutomataConfig = {
-  numParents: 2,
-  numStates: 3,
-  ruleMode: 'symmetric',
-  rules: [1, 2, 0, 0, 1, 2],
-  initial: [0, 0, 0],
-  padLeft: [0],
-  padRight: [0],
-}
+const DEFAULT_CONFIG: AutomataConfig = parseConfigIdentifier('S2#231123');
 
 interface State {
   config: AutomataConfig;
@@ -59,27 +53,20 @@ const [store, setStore] = createStore<State>({
 })
 
 export function regenerateRows(targetCount = DEFAULT_BATCH) {
-  const config = { ...store.config }
-  const rows: number[][] = [config.initial.slice()]
-  let prev = config.initial
-  for (let i = 1; i < targetCount; i++) {
-    const next = automataStep(config, prev)
-    rows.push(next)
-    prev = next
-  }
-  setStore('rows', rows)
+  const config = { ...store.config };
+  const initial = config.initial.slice();
+  setStore('rows', [
+    initial,
+    ...automataStepBatch(config, initial, targetCount)
+  ]);
 }
 
 export function extendRows(targetCount: number) {
-  if (store.rows.length >= targetCount) return
-  const config = { ...store.config }
+  if (store.rows.length >= targetCount) return;
+  const config = { ...store.config };
   setStore(produce(s => {
-    let prev = s.rows[s.rows.length - 1]
-    while (s.rows.length < targetCount) {
-      const next = automataStep(config, prev)
-      s.rows.push(next)
-      prev = next
-    }
+    const rows = automataStepBatch(config, s.rows[s.rows.length - 1], targetCount - s.rows.length);
+    s.rows.push(...rows);
   }))
 }
 

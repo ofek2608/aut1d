@@ -1,20 +1,26 @@
-import { canonicalNeighborhood, getRuleIndex } from "./rules"
 import type { AutomataConfig } from "./config"
+import { createRuleResolver } from "./rules";
 
-function getChild(config: AutomataConfig, parents: number[], index: number): number {
-  const neighborhood = parents.slice(index, index + config.numParents)
-  const canonical = canonicalNeighborhood(neighborhood, config.ruleMode)
-  const ruleIndex = getRuleIndex(canonical, config.numParents, config.ruleMode)
-  if (ruleIndex < 0 || ruleIndex >= config.rules.length) return 0
-  return config.rules[ruleIndex]
+function automataStep0(config: AutomataConfig, resolver: (parents: number[]) => number, world: number[]): number[] {
+  const result: number[] = [];
+  for (let i = 0; i <= world.length - config.numParents; i++) {
+    result.push(resolver(world.slice(i, i + config.numParents)));
+  }
+  return [...config.padLeft, ...result, ...config.padRight];
 }
 
 export function automataStep(config: AutomataConfig, world: number[]): number[] {
-  const result: number[] = []
-  for (let i = 0; i < world.length; i++) {
-    if (i >= config.numParents - 1) {
-      result.push(getChild(config, world, i - config.numParents + 1))
-    }
+  const resolver = createRuleResolver(config.ruleMode, config.numParents, config.numStates, config.rules);
+  return automataStep0(config, resolver, world);
+}
+
+export function automataStepBatch(config: AutomataConfig, initial: number[], stepCount: number): number[][] {
+  const result: number[][] = [];
+  let current = initial;
+  const resolver = createRuleResolver(config.ruleMode, config.numParents, config.numStates, config.rules);
+  while (result.length < stepCount) {
+    current = automataStep0(config, resolver, current);
+    result.push(current);
   }
-  return [...config.padLeft, ...result, ...config.padRight]
+  return result;
 }
