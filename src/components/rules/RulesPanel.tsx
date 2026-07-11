@@ -1,6 +1,5 @@
 import { store, setNumParents, setRuleMode, randomizeRules, computedRuleCount } from '../../store'
 import type { RuleMode } from '../../automata/config'
-import { Show } from 'solid-js'
 import SidebarSection from '../layout/SidebarSection'
 import ConfigIdentifier from './ConfigIdentifier'
 import RulesGrid from './RulesGrid'

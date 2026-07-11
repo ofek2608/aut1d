@@ -1,12 +1,14 @@
 import { createEffect, createMemo, createSignal } from 'solid-js'
 import { store, applyConfig } from '../../store'
 import { parseConfigIdentifier, serializeConfigIdentifier } from '../../automata/identifier'
+import IdentifierInfoModal from './IdentifierInfoModal'
 import styles from './ConfigIdentifier.module.css'
 
 export default function ConfigIdentifier() {
   const serialized = createMemo(() => serializeConfigIdentifier(store.config))
   const [draft, setDraft] = createSignal(serialized())
   const [focused, setFocused] = createSignal(false)
+  const [infoOpen, setInfoOpen] = createSignal(false)
 
   createEffect(() => {
     if (!focused()) {
@@ -43,38 +45,50 @@ export default function ConfigIdentifier() {
   }
 
   return (
-    <div class={styles.row}>
-      <input
-        type="text"
-        class={styles.input}
-        value={draft()}
-        spellcheck={false}
-        aria-label="Automata config identifier"
-        onFocus={() => setFocused(true)}
-        onBlur={() => {
-          setFocused(false)
-          setDraft(serialized())
-        }}
-        onInput={e => handleInput(e.currentTarget.value)}
-      />
-      <button
-        type="button"
-        class={styles.actionBtn}
-        onClick={copyIdentifier}
-        aria-label="Copy identifier"
-        title="Copy identifier"
-      >
-        <i class="fa-regular fa-copy" aria-hidden="true" />
-      </button>
-      <button
-        type="button"
-        class={styles.actionBtn}
-        onClick={pasteIdentifier}
-        aria-label="Paste identifier"
-        title="Paste identifier"
-      >
-        <i class="fa-regular fa-paste" aria-hidden="true" />
-      </button>
-    </div>
+    <>
+      <div class={styles.row}>
+        <input
+          type="text"
+          class={styles.input}
+          value={draft()}
+          spellcheck={false}
+          aria-label="Automata config identifier"
+          onFocus={() => setFocused(true)}
+          onBlur={() => {
+            setFocused(false)
+            setDraft(serialized())
+          }}
+          onInput={e => handleInput(e.currentTarget.value)}
+        />
+        <button
+          type="button"
+          class={styles.actionBtn}
+          onClick={copyIdentifier}
+          aria-label="Copy identifier"
+          title="Copy identifier"
+        >
+          <i class="fa-regular fa-copy" aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          class={styles.actionBtn}
+          onClick={pasteIdentifier}
+          aria-label="Paste identifier"
+          title="Paste identifier"
+        >
+          <i class="fa-regular fa-paste" aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          class={styles.actionBtn}
+          onClick={() => setInfoOpen(true)}
+          aria-label="Identifier format info"
+          title="Identifier format info"
+        >
+          <i class="fa-solid fa-circle-info" aria-hidden="true" />
+        </button>
+      </div>
+      <IdentifierInfoModal open={infoOpen()} onClose={() => setInfoOpen(false)} />
+    </>
   )
 }

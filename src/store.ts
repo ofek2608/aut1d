@@ -88,10 +88,7 @@ export function setNumParents(n: number) {
     const { numStates, ruleMode } = s.config
     s.config.numParents = n
     s.config.rules = resizeRulesForParents(n, numStates, ruleMode)
-    s.config.initial = new Array(2 * n - 1).fill(0)
-    if (n > 2) {
-      s.config.initial[n - 1] = 1
-    }
+    s.config.initial = new Array(2 * n - 3).fill(0)
     s.config.padLeft = new Array(n - 1).fill(0)
     s.config.padRight = new Array(n - 1).fill(0)
   }))
