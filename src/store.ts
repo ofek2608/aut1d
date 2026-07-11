@@ -64,7 +64,7 @@ export function extendRows(targetCount: number) {
 }
 
 export function setNumParents(n: number) {
-  const ruleLen = Math.pow(n, store.config.numStates)
+  const ruleLen = Math.pow(store.config.numStates, n)
   const half = Math.floor((n - 1) / 2)
   setStore('config', {
     numParents: n,
@@ -77,7 +77,7 @@ export function setNumParents(n: number) {
 export function setNumStates(n: number) {
   setStore('config', {
     numStates: n,
-    rules: new Array(Math.pow(store.config.numParents, n)).fill(0),
+    rules: new Array(Math.pow(n, store.config.numParents)).fill(0),
   })
 }
 

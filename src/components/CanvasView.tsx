@@ -178,6 +178,7 @@ export default function CanvasView() {
   createEffect(() => {
     const rows = store.rows
     const cs = cellSize()
+    const outline = Math.min(1, Math.floor(cs * 0.1));
     const palette = PALETTES[store.palette] ?? PALETTES['classic']
     const px = panX()
     const py = panY()
@@ -204,7 +205,7 @@ export default function CanvasView() {
         // Reference cell index for this row
         const refI = alignment === 'left' ? 0
           : alignment === 'right' ? rowLen - 1
-          : Math.floor(rowLen / 2)
+          : rowLen / 2
 
         // Visible cell range: rx + px + (i - refI) * cs in [0, w]
         const iMin = Math.max(0, Math.floor(refI + (-rx - px) / cs))
@@ -217,9 +218,8 @@ export default function CanvasView() {
         while (c <= iMax) {
           const state = row[c]
           let end = c + 1
-          while (end <= iMax && row[end] === state) end++
           ctx.fillStyle = palette[state] ?? '#888888'
-          ctx.fillRect(rx + px + (c - refI) * cs, y, (end - c) * cs, cs)
+          ctx.fillRect(rx + px + (c - refI) * cs + outline, y + outline, (end - c) * cs - 2 * outline, cs - 2 * outline)
           c = end
         }
       }
