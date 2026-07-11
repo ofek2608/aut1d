@@ -1,5 +1,6 @@
 import { For, createMemo } from "solid-js";
 import { store, setSelectedState, setNumStates, activePalette } from "../../store";
+import { MAX_STATES } from "../../automata/config";
 import styles from "./StateGrid.module.css";
 
 function StatePaletteGridCell(props: { state: number }) {
@@ -19,12 +20,13 @@ function StatePaletteGridCell(props: { state: number }) {
   );
 }
 
-function ChangeNumStatesButton(props: { icon: string; diff: number; label: string }) {
+function ChangeNumStatesButton(props: { icon: string; diff: number; label: string; disabled?: boolean }) {
   return (
     <button
       type="button"
       class={styles.statePaletteGridButton}
       onClick={() => setNumStates(store.config.numStates + props.diff)}
+      disabled={props.disabled}
       aria-label={props.label}
       title={props.label}
     >
@@ -43,8 +45,8 @@ export default function StatePaletteGrid() {
       <For each={stateIndices()}>
         {state => <StatePaletteGridCell state={state} />}
       </For>
-      <ChangeNumStatesButton icon="minus" diff={-1} label="Remove state" />
-      <ChangeNumStatesButton icon="plus" diff={1} label="Add state" />
+      <ChangeNumStatesButton icon="minus" diff={-1} label="Remove state" disabled={store.config.numStates <= 1} />
+      <ChangeNumStatesButton icon="plus" diff={1} label="Add state" disabled={store.config.numStates >= MAX_STATES} />
     </div>
   )
 }

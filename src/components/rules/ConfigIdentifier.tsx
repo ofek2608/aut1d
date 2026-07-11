@@ -1,6 +1,6 @@
 import { createEffect, createMemo, createSignal } from 'solid-js'
 import { store, applyConfig } from '../../store'
-import { parseConfigIdentifier, serializeConfigIdentifier } from '../../configIdentifier'
+import { parseConfigIdentifier, serializeConfigIdentifier } from '../../automata/identifier'
 import styles from './ConfigIdentifier.module.css'
 
 export default function ConfigIdentifier() {

@@ -1,9 +1,7 @@
-import type { AutomataConfig } from './automataConfig'
+import { MAX_STATES, type AutomataConfig, type RuleMode } from './config'
 import {
-  decodeNeighborhood,
-  displayRuleCount,
-  displayRuleIndices,
-  type RuleMode,
+  getRuleCountForStates,
+  getStateCountForRules,
 } from './rules'
 
 const RULE_MODE_FROM_CHAR: Record<string, RuleMode> = {
@@ -18,23 +16,52 @@ const RULE_MODE_TO_CHAR: Record<RuleMode, string> = {
   unordered: 'U',
 }
 
-export function encodeStateChar(state: number): string {
-  if (state >= 0 && state <= 8) return String(state + 1)
-  if (state >= 9 && state <= 35) return String.fromCharCode('a'.charCodeAt(0) + state)
-  throw new Error(`State out of range: ${state}`)
+function usesLetterEncoding(numStates: number): boolean {
+  return numStates >= 10
 }
 
-export function decodeStateChar(char: string): number | null {
+export function encodeStateChar(state: number, numStates: number): string {
+  if (state < 0 || state >= numStates || state >= MAX_STATES) {
+    throw new Error(`State out of range: ${state}`)
+  }
+  if (usesLetterEncoding(numStates)) {
+    return String.fromCharCode('a'.charCodeAt(0) + state)
+  }
+  return String(state + 1)
+}
+
+export function decodeStateChar(char: string, numStates?: number): number | null {
   if (char.length !== 1) return null
-  if (char >= '1' && char <= '9') return char.charCodeAt(0) - '1'.charCodeAt(0)
-  if (char >= 'a' && char <= 'z') return char.charCodeAt(0) - 'a'.charCodeAt(0)
+
+  if (char >= 'a' && char <= 'z') {
+    const state = char.charCodeAt(0) - 'a'.charCodeAt(0)
+    if (state >= MAX_STATES) return null
+    return state
+  }
+
+  if (numStates !== undefined && usesLetterEncoding(numStates)) return null
+
+  if (char >= '1' && char <= '9') {
+    return char.charCodeAt(0) - '1'.charCodeAt(0)
+  }
+
   return null
 }
 
-function decodeStateString(value: string): number[] | null {
+function isValidEncodedChar(char: string, numStates: number): boolean {
+  const state = decodeStateChar(char, numStates)
+  return state !== null && state < numStates
+}
+
+function validatesStateEncoding(value: string, numStates: number): boolean {
+  if (value.length === 0) return true
+  return [...value].every(char => isValidEncodedChar(char, numStates))
+}
+
+function decodeStateString(value: string, numStates?: number): number[] | null {
   const states: number[] = []
   for (const char of value) {
-    const state = decodeStateChar(char)
+    const state = decodeStateChar(char, numStates)
     if (state === null) return null
     states.push(state)
   }
@@ -67,6 +94,7 @@ function nucleationPattern(numParents: number) {
 
 function serializePattern(config: AutomataConfig): string {
   const numParents = config.numParents
+  const { numStates } = config
   const defaults = defaultPattern(numParents)
   const nucleation = nucleationPattern(numParents)
 
@@ -86,12 +114,14 @@ function serializePattern(config: AutomataConfig): string {
     return 'N'
   }
 
-  return `${config.padLeft.map(encodeStateChar).join('')};${config.initial.map(encodeStateChar).join('')};${config.padRight.map(encodeStateChar).join('')}`
+  const encode = (state: number) => encodeStateChar(state, numStates)
+  return `${config.padLeft.map(encode).join('')};${config.initial.map(encode).join('')};${config.padRight.map(encode).join('')}`
 }
 
 function parsePattern(
   pattern: string,
   numParents: number,
+  numStates?: number,
 ): Pick<AutomataConfig, 'padLeft' | 'initial' | 'padRight'> | null {
   if (pattern === '') return defaultPattern(numParents)
   if (pattern === 'N') return nucleationPattern(numParents)
@@ -99,16 +129,16 @@ function parsePattern(
   const parts = pattern.split(';')
   if (parts.length !== 3) return null
 
-  const padLeft = decodeStateString(parts[0])
-  const initial = decodeStateString(parts[1])
-  const padRight = decodeStateString(parts[2])
+  const padLeft = decodeStateString(parts[0], numStates)
+  const initial = decodeStateString(parts[1], numStates)
+  const padRight = decodeStateString(parts[2], numStates)
   if (padLeft === null || initial === null || padRight === null) return null
 
   return { padLeft, initial, padRight }
 }
 
 function serializeRules(config: AutomataConfig): string {
-  return config.rules.map(encodeStateChar).join('')
+  return config.rules.map(state => encodeStateChar(state, config.numStates)).join('')
 }
 
 function parseRules(
@@ -125,15 +155,11 @@ function parseRules(
     rules.push(state)
   }
 
-  const numStates = maxState(rules) + 1
-  const expectedCount = displayRuleCount(numParents, numStates, ruleMode)
-  if (rules.length !== expectedCount) return null
-
-  const displayIndices = displayRuleIndices(numParents, numStates, ruleMode)
-  for (let i = 0; i < rules.length; i++) {
-    const neighborhood = decodeNeighborhood(displayIndices[i], numParents, numStates)
-    if (neighborhood.some(state => state >= numStates)) return null
-  }
+  const numStates = getStateCountForRules(ruleMode, numParents, rules.length)
+  if (numStates === null) return null
+  if (getRuleCountForStates(ruleMode, numParents, numStates) !== rules.length) return null
+  if (!validatesStateEncoding(rulesText, numStates)) return null
+  if (rules.some(state => state >= numStates)) return null
 
   return { rules, numStates }
 }
@@ -149,19 +175,25 @@ export function parseConfigIdentifier(value: string): AutomataConfig | null {
 
   const ruleMode = RULE_MODE_FROM_CHAR[match[1]]
   const numParents = Number(match[2])
-  const pattern = parsePattern(match[3], numParents)
-  if (!pattern) return null
 
   const parsedRules = parseRules(match[4], numParents, ruleMode)
   if (!parsedRules) return null
 
+  const pattern = parsePattern(match[3], numParents, parsedRules.numStates)
+  if (!pattern) return null
+
+  const patternText = match[3]
+  if (patternText !== '' && patternText !== 'N' && !validatesStateEncoding(patternText.replace(/;/g, ''), parsedRules.numStates)) {
+    return null
+  }
+
   const patternStates = [...pattern.padLeft, ...pattern.initial, ...pattern.padRight]
   const numStates = Math.max(parsedRules.numStates, maxState(patternStates) + 1)
+  if (numStates > MAX_STATES) return null
 
-  const expectedCount = displayRuleCount(numParents, numStates, ruleMode)
-  if (parsedRules.rules.length !== expectedCount) return null
-
+  if (getRuleCountForStates(ruleMode, numParents, numStates) !== parsedRules.rules.length) return null
   if (patternStates.some(state => state >= numStates)) return null
+  if (!validatesStateEncoding(match[4], numStates)) return null
 
   const config: AutomataConfig = {
     numParents,

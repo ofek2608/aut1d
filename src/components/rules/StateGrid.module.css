@@ -46,3 +46,8 @@
 .statePaletteGridButton:hover {
   outline: var(--outline-hover);
 }
+
+.statePaletteGridButton:disabled {
+  opacity: var(--opacity-disabled);
+  cursor: default;
+}

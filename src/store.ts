@@ -1,16 +1,15 @@
 import { createStore, produce } from 'solid-js/store'
-import { automataStep, normalizeRules, type AutomataConfig } from './automataConfig'
+import { MAX_STATES, type AutomataConfig, type RuleMode } from './automata/config'
+import { automataStep } from './automata/step'
 import {
-  collapseToDisplayRules,
+  applyRuleMode,
   displayRuleCount,
-  displayRuleIndices,
-  expandDisplayRules,
   resizeRules,
-  type RuleMode,
-} from './rules'
+  normalizeRules,
+  getRuleCountForStates,
+} from './automata/rules'
 
 export type Alignment = 'left' | 'center' | 'right'
-export type { RuleMode, AutomataConfig }
 
 export const CUSTOM_PALETTE = 'custom'
 
@@ -114,20 +113,19 @@ export function setNumParents(n: number) {
 }
 
 export function setNumStates(n: number) {
+  const clamped = Math.max(1, Math.min(MAX_STATES, n))
   setStore(produce(s => {
     const { numParents, numStates, ruleMode, rules } = s.config
-    s.config.numStates = n
-    s.config.rules = resizeRules(rules, numParents, n, ruleMode, numParents, numStates, ruleMode)
-    s.customColors = defaultCustomColors(n).map((color, i) => s.customColors[i] ?? color)
-    if (s.selectedCustomColor >= n) s.selectedCustomColor = Math.max(0, n - 1)
+    if (clamped === numStates) return
+    s.config.numStates = clamped
+    s.config.rules = resizeRules(rules, numParents, clamped, ruleMode, numParents, numStates, ruleMode)
+    s.customColors = defaultCustomColors(clamped).map((color, i) => s.customColors[i] ?? color)
+    if (s.selectedCustomColor >= clamped) s.selectedCustomColor = Math.max(0, clamped - 1)
   }))
 }
 
-export function setRule(index: number, value: number) {
-  const { numParents, numStates, ruleMode } = store.config
-  const indices = displayRuleIndices(numParents, numStates, ruleMode)
-  const displayPos = indices.indexOf(index)
-  if (displayPos < 0) return
+export function setRule(displayPos: number, value: number) {
+  if (displayPos < 0 || displayPos >= store.config.rules.length) return
   setStore('config', 'rules', displayPos, value)
 }
 
@@ -135,19 +133,14 @@ export function setRuleMode(mode: RuleMode) {
   setStore(produce(s => {
     const { numParents, numStates, ruleMode, rules } = s.config
     s.config.ruleMode = mode
-    s.config.rules = collapseToDisplayRules(
-      expandDisplayRules(rules, numParents, numStates, ruleMode),
-      numParents,
-      numStates,
-      mode,
-    )
+    s.config.rules = applyRuleMode(rules, numParents, numStates, ruleMode, mode)
   }))
 }
 
 export function randomizeRules() {
   const { numParents, numStates, ruleMode } = store.config
   setStore(produce(s => {
-    const count = displayRuleCount(numParents, numStates, ruleMode)
+    const count = getRuleCountForStates(ruleMode, numParents, numStates)
     s.config.rules = Array.from({ length: count }, () => Math.floor(Math.random() * numStates))
   }))
 }
