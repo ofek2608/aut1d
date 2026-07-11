@@ -1,6 +1,6 @@
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(calc(var(--size-square-sm) * var(--num-parents) + 4px), 1fr));
   gap: 8px;
 }
 
@@ -8,12 +8,10 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
 }
 
 .neighborhood {
   display: flex;
-  gap: 2px;
   justify-content: center;
 }
 

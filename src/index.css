@@ -5,7 +5,6 @@
   --color-bg: #16171d;
   --color-surface: #1f2028;
   --color-border: #2e303a;
-  --color-border-subtle: rgba(255, 255, 255, 0.12);
   --color-outline-hover: #9ca3af;
   --color-outline-selected: #ffffff;
   --color-overlay: rgba(0, 0, 0, 0.5);
@@ -18,7 +17,7 @@
   --outline-selected: var(--outline-width) solid var(--color-outline-selected);
 
   /* Sizes */
-  --size-square-sm: 16px;
+  --size-square-sm: 24px;
   --size-square-lg: 32px;
 
   /* Typography */

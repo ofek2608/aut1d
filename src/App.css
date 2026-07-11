@@ -34,7 +34,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: var(--text-size-md);
+  font-size: var(--text-size-lg);
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -118,32 +118,6 @@
 .align-btn.active,
 .align-btn.active:hover {
   outline: var(--outline-selected);
-}
-
-/* Preset buttons */
-.preset-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.preset-btn {
-  padding: 4px 10px;
-  font-size: var(--text-size-md);
-  background: var(--bg2);
-  border: var(--border-width) solid var(--border);
-  color: var(--text-h);
-  outline: none;
-  transition: var(--transition-hover);
-}
-
-.preset-btn:hover:not(:disabled) {
-  outline: var(--outline-hover);
-}
-
-.preset-btn:disabled {
-  opacity: var(--opacity-disabled);
-  cursor: default;
 }
 
 /* Palette picker */
