@@ -1,5 +1,6 @@
 import { Show } from 'solid-js'
-import AboutSection from '../AboutSection'
+import SidebarSection from '../layout/SidebarSection'
+import AboutSection from './AboutSection'
 import PaletteSelector from './PaletteSelector'
 import AlignmentSelector from './AlignmentSelector'
 import CustomPaletteEditor from './CustomPaletteEditor'
@@ -13,19 +14,17 @@ export default function ViewPanel() {
         View
       </h2>
 
-      <section class="panel-section">
-        <div class="section-header">Palette</div>
+      <SidebarSection title="Palette" icon="palette">
         <PaletteSelector />
         <Show when={store.palette === CUSTOM_PALETTE}>
           <div class="section-header">Colors</div>
           <CustomPaletteEditor />
         </Show>
-      </section>
+      </SidebarSection>
 
-      <section class="panel-section">
-        <div class="section-header">Alignment</div>
+      <SidebarSection title="Alignment" icon="align-center">
         <AlignmentSelector />
-      </section>
+      </SidebarSection>
 
       <AboutSection />
     </div>

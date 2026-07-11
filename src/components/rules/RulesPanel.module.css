@@ -1,9 +1,3 @@
-.rulesSection {
-  flex: 1;
-  overflow-y: auto;
-  min-height: 0;
-}
-
 .modeGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, var(--size-square-lg));

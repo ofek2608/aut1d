@@ -1,6 +1,7 @@
 import { store, setNumParents, setRuleMode, randomizeRules, computedRuleCount } from '../../store'
 import type { RuleMode } from '../../automata/config'
 import { Show } from 'solid-js'
+import SidebarSection from '../layout/SidebarSection'
 import ConfigIdentifier from './ConfigIdentifier'
 import RulesGrid from './RulesGrid'
 import StateListEditor from './StateListEditor'
@@ -47,12 +48,11 @@ export default function RulesPanel() {
         Rules
       </h2>
 
-      <section class="panel-section">
-        <div class="section-header">States ({store.config.numStates})</div>
+      <SidebarSection title={`States (${store.config.numStates})`} icon="shapes">
         <StatePaletteGrid />
-      </section>
+      </SidebarSection>
 
-      <section class={`panel-section ${styles.rulesSection}`}>
+      <SidebarSection title="Rules" icon="table-cells" flexGrow>
         <label class="field-label">
           Parents
           <select
@@ -62,9 +62,6 @@ export default function RulesPanel() {
             {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => <option value={n}>{n}</option>)}
           </select>
         </label>
-        <Show when={store.config.numParents >= 2}>
-          <div class="section-header">Neighborhood</div>
-        </Show>
         <div class={styles.modeGrid}>
           <RuleModeCell mode="asymmetric" icon="arrow-right-long" label="Asymmetric" />
           <RuleModeCell mode="symmetric" icon="right-left" label="Symmetric" />
@@ -75,17 +72,15 @@ export default function RulesPanel() {
           Rules ({computedRuleCount()})
         </div>
         <RulesGrid />
-      </section>
+      </SidebarSection>
 
-      <section class="panel-section">
-        <div class="section-header">Pattern</div>
+      <SidebarSection title="Pattern" icon="paintbrush">
         <StateListEditor />
-      </section>
+      </SidebarSection>
 
-      <section class="panel-section">
-        <div class="section-header">Identifier</div>
+      <SidebarSection title="Identifier" icon="barcode">
         <ConfigIdentifier />
-      </section>
+      </SidebarSection>
     </div>
   )
 }

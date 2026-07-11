@@ -1,11 +1,11 @@
+import SidebarSection from '../layout/SidebarSection'
 import styles from './AboutSection.module.css'
 
 const GITHUB_URL = 'https://github.com/ofek2608/aut1d'
 
 export default function AboutSection() {
   return (
-    <section class="panel-section">
-      <div class="section-header">About</div>
+    <SidebarSection title="About" icon="circle-info">
       <p class={styles.description}>
         Aut1D is an interactive playground for one-dimensional cellular automata.
         Define states and rules, paint an initial pattern, and watch it evolve row by row.
@@ -23,6 +23,6 @@ export default function AboutSection() {
           <i class="fa-brands fa-github" aria-hidden="true" />
         </a>
       </div>
-    </section>
+    </SidebarSection>
   )
 }

@@ -2,8 +2,8 @@ import { createSignal, Show } from 'solid-js'
 import CanvasView from './components/CanvasView'
 import RulesPanel from './components/rules/RulesPanel'
 import ViewPanel from './components/view/ViewPanel'
-import MobileNav from './components/MobileNav'
-import SidebarResizer from './components/SidebarResizer'
+import MobileNav from './components/layout/MobileNav'
+import SidebarResizer from './components/layout/SidebarResizer'
 import './App.css'
 
 const DEFAULT_LEFT_WIDTH = 260
