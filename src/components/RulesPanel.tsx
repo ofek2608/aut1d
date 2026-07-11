@@ -1,7 +1,8 @@
-import { store, setNumParents, setNumStates, setPadLeft, setPadRight, PALETTES } from '../store'
+import { store, setNumParents, setPadLeft, setPadRight, PALETTES } from '../store'
 import { Index } from 'solid-js'
 import RulesGrid from './RulesGrid'
 import InitialPatternEditor from './InitialPatternEditor'
+import StatePaletteGrid from './StateGrid';
 
 function PadEditor(props: { label: string; cells: number[]; onChange: (c: number[]) => void }) {
   const palette = () => PALETTES[store.palette] ?? PALETTES['classic']
@@ -41,6 +42,11 @@ export default function RulesPanel() {
       <h2 class="panel-title">Rules</h2>
 
       <section class="panel-section">
+      <div class="section-header">States ({store.config.numStates})</div>
+        <StatePaletteGrid />
+      </section>
+
+      <section class="panel-section rules-section">
         <label class="field-label">
           Parents
           <select
@@ -50,15 +56,8 @@ export default function RulesPanel() {
             {[1, 2, 3, 4, 5].map(n => <option value={n}>{n}</option>)}
           </select>
         </label>
-        <label class="field-label">
-          States
-          <select
-            value={store.config.numStates}
-            onChange={e => setNumStates(Number(e.currentTarget.value))}
-          >
-            {[2, 3, 4, 5].map(n => <option value={n}>{n}</option>)}
-          </select>
-        </label>
+        <div class="section-header">Rules ({store.config.rules.length})</div>
+        <RulesGrid />
       </section>
 
       <section class="panel-section">
@@ -70,11 +69,6 @@ export default function RulesPanel() {
       <section class="panel-section">
         <div class="section-header">Initial ({store.config.initial.length} cells)</div>
         <InitialPatternEditor />
-      </section>
-
-      <section class="panel-section rules-section">
-        <div class="section-header">Rules ({store.config.rules.length})</div>
-        <RulesGrid />
       </section>
     </div>
   )

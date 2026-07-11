@@ -18,17 +18,18 @@ const DEFAULT_BATCH = 500
 const DEFAULT_CONFIG: AutomataConfig = {
   numParents: 2,
   numStates: 3,
-  rules: [1, 1, 1, 1, 0, 1, 1, 0, 0],
+  rules: [1, 2, 0, 2, 0, 1, 0, 1, 2],
   initial: [0],
   padLeft: [0],
   padRight: [0],
 }
 
 interface State {
-  config: AutomataConfig
-  alignment: Alignment
-  palette: string
-  rows: number[][]
+  config: AutomataConfig;
+  alignment: Alignment;
+  palette: string;
+  rows: number[][];
+  selectedState: number;
 }
 
 const [store, setStore] = createStore<State>({
@@ -36,6 +37,7 @@ const [store, setStore] = createStore<State>({
   alignment: 'center',
   palette: 'classic',
   rows: [],
+  selectedState: 0,
 })
 
 export function regenerateRows(targetCount = DEFAULT_BATCH) {
@@ -103,6 +105,10 @@ export function setAlignment(a: Alignment) {
 
 export function setPalette(name: string) {
   if (name in PALETTES) setStore('palette', name)
+}
+
+export function setSelectedState(state: number) {
+  setStore('selectedState', state)
 }
 
 export { store }
