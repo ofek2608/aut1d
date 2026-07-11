@@ -140,6 +140,7 @@ export default function CanvasView() {
     void c.padRight.slice()
     void c.numParents
     void c.numStates
+    void c.ruleMode
     const target = untrack(() => Math.max(REGEN_THRESHOLD, Math.ceil(canvasH() / cellSize()) + REGEN_THRESHOLD))
     regenerateRows(target)
     batch(() => { setPanX(0); setPanY(0) })

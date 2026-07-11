@@ -4,9 +4,9 @@ import { decodeNeighborhood, displayRuleIndices } from '../../rules'
 import StateInput from './StateInput'
 import styles from './RulesGrid.module.css'
 
-function RulesGridEntry(props: { ruleIndex: number }) {
+function RulesGridEntry(props: { ruleIndex: number; displayPos: number }) {
   const neighborhood = () => decodeNeighborhood(props.ruleIndex, store.config.numParents, store.config.numStates)
-  const outputState = () => store.config.rules[props.ruleIndex]
+  const outputState = () => store.config.rules[props.displayPos]
 
   return (
     <div class={styles.entry}>
@@ -27,13 +27,15 @@ function RulesGridEntry(props: { ruleIndex: number }) {
 
 export default function RulesGrid() {
   const displayIndices = createMemo(() =>
-    displayRuleIndices(store.config.numParents, store.config.numStates, store.ruleMode),
+    displayRuleIndices(store.config.numParents, store.config.numStates, store.config.ruleMode),
   )
 
   return (
     <div class={styles.grid} style={{ '--num-parents': store.config.numParents }}>
       <For each={displayIndices()}>
-        {ruleIndex => <RulesGridEntry ruleIndex={ruleIndex} />}
+        {(ruleIndex, displayPos) => (
+          <RulesGridEntry ruleIndex={ruleIndex} displayPos={displayPos()} />
+        )}
       </For>
     </div>
   )

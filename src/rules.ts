@@ -131,16 +131,55 @@ export function applyRuleMode(rules: number[], numParents: number, numStates: nu
   return result
 }
 
+export function expandDisplayRules(
+  displayRules: number[],
+  numParents: number,
+  numStates: number,
+  mode: RuleMode,
+): number[] {
+  const fullLength = fullRuleCount(numParents, numStates)
+  if (displayRules.length === fullLength) return displayRules.slice()
+
+  const full = new Array(fullLength).fill(0)
+  const indices = displayRuleIndices(numParents, numStates, mode)
+  for (let i = 0; i < indices.length; i++) {
+    const value = displayRules[i] ?? 0
+    for (const j of equivalentRuleIndices(indices[i], numParents, numStates, mode)) {
+      full[j] = value
+    }
+  }
+  return full
+}
+
+export function collapseToDisplayRules(
+  fullRules: number[],
+  numParents: number,
+  numStates: number,
+  mode: RuleMode,
+): number[] {
+  const indices = displayRuleIndices(numParents, numStates, mode)
+  return indices.map(i => fullRules[i] ?? 0)
+}
+
 export function resizeRules(
   rules: number[],
   numParents: number,
   numStates: number,
   mode: RuleMode,
+  prevNumParents = numParents,
+  prevNumStates = numStates,
+  prevMode = mode,
 ): number[] {
+  const full = expandDisplayRules(rules, prevNumParents, prevNumStates, prevMode)
   const count = fullRuleCount(numParents, numStates)
   const next = new Array(count).fill(0)
-  for (let i = 0; i < Math.min(rules.length, count); i++) {
-    next[i] = rules[i]
+  for (let i = 0; i < Math.min(full.length, count); i++) {
+    next[i] = full[i]
   }
-  return applyRuleMode(next, numParents, numStates, mode)
+  return collapseToDisplayRules(
+    applyRuleMode(next, numParents, numStates, mode),
+    numParents,
+    numStates,
+    mode,
+  )
 }

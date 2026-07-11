@@ -1,12 +1,13 @@
 import { store, setNumParents, setRuleMode, randomizeRules, computedRuleCount, type RuleMode } from '../../store'
 import { Show } from 'solid-js'
+import ConfigIdentifier from './ConfigIdentifier'
 import RulesGrid from './RulesGrid'
 import StateListEditor from './StateListEditor'
 import StatePaletteGrid from './StateGrid'
 import styles from './RulesPanel.module.css'
 
 function RuleModeCell(props: { mode: RuleMode; icon: string; label: string }) {
-  const selected = () => store.ruleMode === props.mode
+  const selected = () => store.config.ruleMode === props.mode
 
   return (
     <button
@@ -57,7 +58,7 @@ export default function RulesPanel() {
             value={store.config.numParents}
             onChange={e => setNumParents(Number(e.currentTarget.value))}
           >
-            {[1, 2, 3, 4, 5].map(n => <option value={n}>{n}</option>)}
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => <option value={n}>{n}</option>)}
           </select>
         </label>
         <Show when={store.config.numParents >= 2}>
@@ -78,6 +79,11 @@ export default function RulesPanel() {
       <section class="panel-section">
         <div class="section-header">Pattern</div>
         <StateListEditor />
+      </section>
+
+      <section class="panel-section">
+        <div class="section-header">Identifier</div>
+        <ConfigIdentifier />
       </section>
     </div>
   )

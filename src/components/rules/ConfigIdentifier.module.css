@@ -1,0 +1,37 @@
+.row {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 6px;
+  font-family: var(--mono);
+  font-size: var(--text-size-sm);
+  border: var(--border-width) solid var(--border);
+}
+
+.actionBtn {
+  width: var(--size-square-lg);
+  height: var(--size-square-lg);
+  flex-shrink: 0;
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+  background: var(--bg2);
+  color: var(--text-h);
+  border: var(--border-width) solid var(--border);
+  cursor: pointer;
+  outline: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-size-lg);
+  transition: var(--transition-hover);
+}
+
+.actionBtn:hover {
+  outline: var(--outline-hover);
+}
