@@ -1,11 +1,11 @@
 import { For } from 'solid-js'
-import { store, setPalette, PALETTES, CUSTOM_PALETTE } from '../../store'
+import { localStore, setPalette, PALETTES, CUSTOM_PALETTE } from '../../localStore'
 import styles from './PaletteSelector.module.css'
 
 const PALETTE_NAMES = Object.keys(PALETTES)
 
 function PaletteRow(props: { name: string; colors: string[] }) {
-  const selected = () => store.palette === props.name
+  const selected = () => localStore.palette === props.name
 
   return (
     <button
@@ -32,7 +32,7 @@ export default function PaletteSelector() {
       <For each={PALETTE_NAMES}>
         {name => <PaletteRow name={name} colors={PALETTES[name]} />}
       </For>
-      <PaletteRow name={CUSTOM_PALETTE} colors={store.customColors} />
+      <PaletteRow name={CUSTOM_PALETTE} colors={localStore.customColors} />
     </div>
   )
 }

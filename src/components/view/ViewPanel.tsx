@@ -4,7 +4,7 @@ import AboutSection from './AboutSection'
 import PaletteSelector from './PaletteSelector'
 import AlignmentSelector from './AlignmentSelector'
 import CustomPaletteEditor from './CustomPaletteEditor'
-import { store, CUSTOM_PALETTE } from '../../store'
+import { localStore, CUSTOM_PALETTE } from '../../localStore'
 
 export default function ViewPanel() {
   return (
@@ -16,7 +16,7 @@ export default function ViewPanel() {
 
       <SidebarSection title="Palette" icon="palette">
         <PaletteSelector />
-        <Show when={store.palette === CUSTOM_PALETTE}>
+        <Show when={localStore.palette === CUSTOM_PALETTE}>
           <div class="section-header">Colors</div>
           <CustomPaletteEditor />
         </Show>

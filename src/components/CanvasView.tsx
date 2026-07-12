@@ -1,5 +1,6 @@
 import { batch, createEffect, createMemo, createSignal, onCleanup, onMount, untrack } from 'solid-js'
-import { store, regenerateRows, extendRows, activePalette } from '../store'
+import { store, regenerateRows, extendRows } from '../store'
+import { localStore, activePalette } from '../localStore'
 // rowWorldStart not needed: per-row alignment uses row.length directly
 
 const BASE_CELL_SIZE = 4
@@ -179,7 +180,7 @@ export default function CanvasView() {
     const w = canvasW()
     const h = canvasH()
     const rx = canvasW() / 2
-    const alignment = store.alignment
+    const alignment = localStore.alignment
 
     cancelAnimationFrame(rafId)
     rafId = requestAnimationFrame(() => {

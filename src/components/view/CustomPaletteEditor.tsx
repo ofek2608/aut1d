@@ -1,31 +1,48 @@
-import { For } from 'solid-js'
-import { store, setCustomColor, setSelectedCustomColor } from '../../store'
+import { For, createEffect, createSignal } from 'solid-js'
+import { localStore, setCustomColor } from '../../localStore'
 import styles from './CustomPaletteEditor.module.css'
 
-function ColorCell(props: { index: number; color: string }) {
-  const selected = () => store.selectedCustomColor === props.index
-
+function ColorCell(props: {
+  index: number
+  color: string
+  selected: boolean
+  onSelect: () => void
+}) {
   return (
     <button
       type="button"
       class={styles.cell}
-      classList={{ [styles.selected]: selected() }}
+      classList={{ [styles.selected]: props.selected }}
       style={{ 'background-color': props.color }}
-      onClick={() => setSelectedCustomColor(props.index)}
-      aria-pressed={selected()}
+      onClick={() => props.onSelect()}
+      aria-pressed={props.selected}
       title={`State ${props.index}`}
     />
   )
 }
 
 export default function CustomPaletteEditor() {
-  const selectedColor = () => store.customColors[store.selectedCustomColor] ?? '#888888'
+  const [selectedIndex, setSelectedIndex] = createSignal(0)
+
+  createEffect(() => {
+    const max = localStore.customColors.length - 1
+    if (selectedIndex() > max) setSelectedIndex(Math.max(0, max))
+  })
+
+  const selectedColor = () => localStore.customColors[selectedIndex()] ?? '#888888'
 
   return (
     <div class={styles.editor}>
       <div class={styles.grid}>
-        <For each={store.customColors}>
-          {(color, index) => <ColorCell index={index()} color={color} />}
+        <For each={localStore.customColors}>
+          {(color, index) => (
+            <ColorCell
+              index={index()}
+              color={color}
+              selected={selectedIndex() === index()}
+              onSelect={() => setSelectedIndex(index())}
+            />
+          )}
         </For>
       </div>
       <label class={styles.pickerRow}>
@@ -34,8 +51,8 @@ export default function CustomPaletteEditor() {
           type="color"
           class={styles.picker}
           value={selectedColor()}
-          onInput={e => setCustomColor(store.selectedCustomColor, e.currentTarget.value)}
-          aria-label={`Color for state ${store.selectedCustomColor}`}
+          onInput={e => setCustomColor(selectedIndex(), e.currentTarget.value)}
+          aria-label={`Color for state ${selectedIndex()}`}
         />
         <input
           type="text"
@@ -44,10 +61,10 @@ export default function CustomPaletteEditor() {
           onInput={e => {
             const value = e.currentTarget.value
             if (/^#[0-9a-fA-F]{6}$/.test(value)) {
-              setCustomColor(store.selectedCustomColor, value)
+              setCustomColor(selectedIndex(), value)
             }
           }}
-          aria-label={`Hex color for state ${store.selectedCustomColor}`}
+          aria-label={`Hex color for state ${selectedIndex()}`}
         />
       </label>
     </div>

@@ -1,5 +1,5 @@
 import { For } from 'solid-js'
-import { store, setAlignment, type Alignment } from '../../store'
+import { localStore, setAlignment, type Alignment } from '../../localStore'
 import styles from './AlignmentSelector.module.css'
 
 const ALIGNMENTS: { value: Alignment; icon: string; label: string }[] = [
@@ -16,9 +16,9 @@ export default function AlignmentSelector() {
           <button
             type="button"
             class={styles.cell}
-            classList={{ [styles.selected]: store.alignment === value }}
+            classList={{ [styles.selected]: localStore.alignment === value }}
             onClick={() => setAlignment(value)}
-            aria-pressed={store.alignment === value}
+            aria-pressed={localStore.alignment === value}
             aria-label={label}
             title={label}
           >

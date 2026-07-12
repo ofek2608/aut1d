@@ -1,4 +1,5 @@
-import { store, activePalette, setSelectedState } from '../../store'
+import { store, setSelectedState } from '../../store'
+import { activePalette } from '../../localStore'
 import styles from './StateInput.module.css'
 
 export default function StateInput(props: {

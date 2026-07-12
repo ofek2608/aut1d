@@ -1,5 +1,6 @@
 import { For, createMemo } from "solid-js";
-import { store, setSelectedState, setNumStates, activePalette } from "../../store";
+import { store, setSelectedState, setNumStates } from "../../store";
+import { activePalette } from "../../localStore";
 import { MAX_STATES } from "../../automata/config";
 import styles from "./StateGrid.module.css";
 
