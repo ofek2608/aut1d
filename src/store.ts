@@ -13,7 +13,17 @@ import { ensureCustomColorsLength } from './localStore'
 
 const DEFAULT_BATCH = 500
 
-const DEFAULT_CONFIG: AutomataConfig = parseConfigIdentifier('S2#231123')!
+function readConfigFromUrl() {
+  try {
+    const value = new URLSearchParams(window.location.search).get('r')
+    if (!value) return null
+    return parseConfigIdentifier(value)
+  } catch {
+    return null
+  }
+}
+
+const DEFAULT_CONFIG = readConfigFromUrl() ?? parseConfigIdentifier('S2#231123')!
 
 interface State {
   config: AutomataConfig

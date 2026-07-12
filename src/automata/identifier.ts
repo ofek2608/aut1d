@@ -18,30 +18,30 @@ export const IDENTIFIER_KEYS: IdentifierKeyInfo[] = [
   { key: 'PL', description: 'Left padding' },
   { key: 'PR', description: 'Right padding' },
   { key: '#', description: 'Rule table' },
+  { key: 'R', description: 'Alias for #' },
 ];
 
-const RULE_MODE_FROM_CHAR: Record<string, RuleMode> = {
+const RULE_MODE_FROM_KEY: Record<string, RuleMode> = {
   A: 'asymmetric',
   S: 'symmetric',
   U: 'unordered',
 };
 
-const RULE_MODE_TO_CHAR: Record<RuleMode, string> = {
+const RULE_MODE_TO_KEY: Record<RuleMode, string> = {
   asymmetric: 'A',
   symmetric: 'S',
   unordered: 'U',
 };
 
-const MODE_KEYS = ['S', 'A', 'U'] as const;
-
 const CONFLICTING_KEYS : string[][] = [
   ['PS', 'PL'],
   ['PS', 'PR'],
   ['A', 'S', 'U'],
+  ['R', '#'],
 ];
 
-const TOKEN_PATTERN = /([A-Z]+|#)([0-9a-z]+;?|;)/g;
-const GLOBAL_PATTERN = /^(([A-Z]+|#)([0-9a-z]+;?|;))*$/;
+const TOKEN_PATTERN = /([A-Z]+|#)([0-9a-z._]+[;-]?|[;-])/g;
+const GLOBAL_PATTERN = /^(([A-Z]+|#)([0-9a-z._]+[;-]?|[;-]))*$/;
 
 function identifierToMap(identifier: string): Map<string, string> {
   if (!GLOBAL_PATTERN.test(identifier)) return new Map();
@@ -49,7 +49,7 @@ function identifierToMap(identifier: string): Map<string, string> {
   const result = new Map<string, string>();
 
   for (const [, key, value] of identifier.matchAll(TOKEN_PATTERN)) {
-    result.set(key, value.replace(/;$/, ''));
+    result.set(key, value.replace(/[;-]$/, ''));
   }
 
   return result;
@@ -60,7 +60,7 @@ function mapToIdentifier(map: Map<string, string>): string {
   for (const { key } of IDENTIFIER_KEYS) {
     const value = map.get(key);
     if (value === undefined) continue;
-    result += `${key}${value === '' ? ';' : value}`;
+    result += `${key}${value === '' ? '-' : value}`;
   }
   return result;
 }
@@ -103,6 +103,15 @@ function encodeStateString(states: number[], numStates: number): string {
   return states.map(state => encodeStateChar(state, numStates)).join('');
 }
 
+function lookupValueMultipleKeys(map: Map<string, string>, ...keys: string[]): [string, string] | [null, null] {
+  for (const key of keys) {
+    if (map.has(key)) {
+      return [key, map.get(key)!];
+    }
+  }
+  return [null, null];
+}
+
 function arraysEqual(a: number[], b: number[]): boolean {
   return a.length === b.length && a.every((value, index) => value === b[index]);
 }
@@ -117,7 +126,7 @@ function defaultPattern(numParents: number) {
 
 function configToIdentifierMap(config: AutomataConfig): Map<string, string> {
   const map = new Map<string, string>();
-  map.set(RULE_MODE_TO_CHAR[config.ruleMode], String(config.numParents));
+  map.set(RULE_MODE_TO_KEY[config.ruleMode], String(config.numParents));
 
   const defaults = defaultPattern(config.numParents);
 
@@ -179,8 +188,10 @@ function parsePatternFromMap(
   return pattern;
 }
 
-export function serializeConfigIdentifier(config: AutomataConfig): string {
-  return mapToIdentifier(configToIdentifierMap(config));
+export function serializeConfigIdentifier(config: AutomataConfig, forUrl: boolean = false): string {
+  const map = configToIdentifierMap(config);
+  const identifier = mapToIdentifier(map);
+  return forUrl ? identifier.replaceAll('#', 'R') : identifier;
 }
 
 export function parseConfigIdentifier(identifier: string): AutomataConfig | null {
@@ -199,16 +210,16 @@ export function parseConfigIdentifier(identifier: string): AutomataConfig | null
 
   // mode
 
-  const modeKey = MODE_KEYS.find(key => map.has(key));
+  const [modeKey, modeValue] = lookupValueMultipleKeys(map, ...Object.keys(RULE_MODE_FROM_KEY));
   if (!modeKey) return null;
 
-  const ruleMode = RULE_MODE_FROM_CHAR[modeKey];
-  const numParents = Number(map.get(modeKey));
+  const ruleMode = RULE_MODE_FROM_KEY[modeKey];
+  const numParents = Number(modeValue);
   if (!Number.isInteger(numParents) || numParents < 1 || numParents > 9) return null;
 
   // rules
 
-  const rulesText = map.get('#');
+  const [, rulesText] = lookupValueMultipleKeys(map, '#', 'R');
   if (!rulesText) return null;
   const numStates = getStateCountForRules(ruleMode, numParents, rulesText.length);
   if (numStates === null) return null;
