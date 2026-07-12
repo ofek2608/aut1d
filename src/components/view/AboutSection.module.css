@@ -19,6 +19,26 @@
   opacity: 0.7;
 }
 
+.links {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.link {
+  font-size: var(--text-size-sm);
+  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  outline: none;
+  transition: var(--transition-hover);
+}
+
+.link:hover {
+  color: var(--text-h);
+  outline: var(--outline-hover);
+}
+
 .githubLink {
   display: flex;
   align-items: center;

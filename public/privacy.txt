@@ -1,0 +1,25 @@
+PRIVACY POLICY
+
+Effective Date: July 12, 2026
+
+Welcome to Aut1D ("we," "our," or "us"). We respect your privacy and are committed to protecting your personal information. 
+
+1. INFORMATION WE COLLECT
+We do not collect, store, or process any personal data or personally identifiable information from visitors to our website. You can browse our site anonymously.
+
+2. LOCAL STORAGE AND PREFERENCES
+We do not use tracking cookies. Instead, we use your browser's local storage feature strictly for your benefit to enhance your user experience. 
+
+- Purpose: Local storage saves your preferences directly in your browser.
+- Data Privacy: This data stays entirely on your local device. It is never sent to our servers or shared with anyone else.
+- No Tracking: We do not use local storage to track your browsing habits, identify you, or serve advertisements.
+- Control: You can clear your browser data or cache at any time to delete this stored information.
+
+3. THIRD-PARTY LINKS
+Our website may contain links to external websites not operated by us. If you click on a third-party link, you will be directed to that site. We have no control over and assume no responsibility for the content, privacy policies, or practices of any third-party sites or services.
+
+4. CONTACT US
+If you have any questions or concerns about this Privacy Policy, please contact us via our main domain or project repository.
+
+5. CHANGES TO THIS PRIVACY POLICY
+We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page. You are advised to review this Privacy Policy periodically for any changes.

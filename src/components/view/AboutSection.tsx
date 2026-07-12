@@ -12,16 +12,26 @@ export default function AboutSection() {
       </p>
       <div class={styles.credit}>
         <span class={styles.author}>Made by OfekN</span>
-        <a
-          class={styles.githubLink}
-          href={GITHUB_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="View source on GitHub"
-          title="View source on GitHub"
-        >
-          <i class="fa-brands fa-github" aria-hidden="true" />
-        </a>
+        <div class={styles.links}>
+          <a
+            class={styles.link}
+            href={`${import.meta.env.BASE_URL}privacy.txt`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Privacy
+          </a>
+          <a
+            class={styles.githubLink}
+            href={GITHUB_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="View source on GitHub"
+            title="View source on GitHub"
+          >
+            <i class="fa-brands fa-github" aria-hidden="true" />
+          </a>
+        </div>
       </div>
     </SidebarSection>
   )
