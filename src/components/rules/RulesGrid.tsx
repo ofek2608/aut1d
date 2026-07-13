@@ -1,16 +1,17 @@
-import { For, Index, createMemo } from 'solid-js'
-import { store, setRule } from '../../store'
-import { createRulePatterns } from '../../automata/rules'
-import StateInput from './StateInput'
-import styles from './RulesGrid.module.css'
+import { For, Index, createMemo } from 'solid-js';
+import { store, setRule } from '../../store';
+import type { StateArray } from '../../automata/config';
+import { createRulePatterns } from '../../automata/rules';
+import StateInput from './StateInput';
+import styles from './RulesGrid.module.css';
 
-function RulesGridEntry(props: { pattern: number[], ruleIndex: number }) {
-  const outputState = () => store.config.rules[props.ruleIndex]
+function RulesGridEntry(props: { pattern: StateArray; ruleIndex: number }) {
+  const outputState = () => store.config.rules[props.ruleIndex];
 
   return (
     <div class={styles.entry}>
       <div class={styles.neighborhood}>
-        <Index each={props.pattern}>
+        <Index each={[...props.pattern]}>
           {(state) => <StateInput value={state()} />}
         </Index>
       </div>
@@ -21,13 +22,13 @@ function RulesGridEntry(props: { pattern: number[], ruleIndex: number }) {
         title={`Rule ${props.ruleIndex}: click to cycle (currently ${outputState()})`}
       />
     </div>
-  )
+  );
 }
 
 export default function RulesGrid() {
   const displayPositions = createMemo(() =>
     createRulePatterns(store.config.ruleMode, store.config.numParents, store.config.numStates),
-  )
+  );
 
   return (
     <div class={styles.grid} style={{ '--num-parents': store.config.numParents }}>
@@ -35,5 +36,5 @@ export default function RulesGrid() {
         {(pattern, index) => <RulesGridEntry pattern={pattern} ruleIndex={index()} />}
       </For>
     </div>
-  )
+  );
 }

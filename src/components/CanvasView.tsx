@@ -1,5 +1,6 @@
 import { batch, createEffect, createMemo, createSignal, onCleanup, onMount, untrack } from 'solid-js'
-import { store, regenerateRows, extendRows } from '../store'
+import { store } from '../store'
+import { getRows, onRowsChange, regenerateRows, extendRows } from '../automata/rows'
 import { localStore, activePalette } from '../localStore'
 // rowWorldStart not needed: per-row alignment uses row.length directly
 
@@ -18,8 +19,13 @@ export default function CanvasView() {
   const [panX, setPanX] = createSignal(0)
   const [panY, setPanY] = createSignal(0)
   const [zoom, setZoom] = createSignal(1.0)
+  const [rowTick, setRowTick] = createSignal(0)
 
   const cellSize = createMemo(() => Math.max(0.5, BASE_CELL_SIZE * zoom()))
+
+  onMount(() => {
+    onCleanup(onRowsChange(() => setRowTick(t => t + 1)))
+  })
 
   // Pan state
   let dragging = false
@@ -125,10 +131,11 @@ export default function CanvasView() {
 
   function maybeExtend() {
     const cs = cellSize()
-    const totalH = store.rows.length * cs
+    const rows = getRows()
+    const totalH = rows.length * cs
     const visibleBottom = -panY() + canvasH()
     if (totalH < visibleBottom + canvasH() * 2) {
-      extendRows(store.rows.length + REGEN_THRESHOLD)
+      extendRows(store.config, rows.length + REGEN_THRESHOLD)
     }
   }
 
@@ -143,7 +150,7 @@ export default function CanvasView() {
     void c.numStates
     void c.ruleMode
     const target = untrack(() => Math.max(REGEN_THRESHOLD, Math.ceil(canvasH() / cellSize()) + REGEN_THRESHOLD))
-    regenerateRows(target)
+    regenerateRows({ ...c }, target)
     batch(() => { setPanX(0); setPanY(0) })
   })
 
@@ -152,7 +159,7 @@ export default function CanvasView() {
     const h = canvasH()
     if (h === 0) return
     const target = untrack(() => Math.ceil(h / cellSize()) + REGEN_THRESHOLD)
-    extendRows(target)
+    extendRows({ ...store.config }, target)
   })
 
   // ResizeObserver
@@ -171,7 +178,8 @@ export default function CanvasView() {
 
   // Draw
   createEffect(() => {
-    const rows = store.rows
+    rowTick()
+    const rows = getRows()
     const cs = cellSize()
     const outline = cs < 10 ? 0 : 1;
     const palette = activePalette()

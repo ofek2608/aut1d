@@ -1,10 +1,10 @@
 import { binomial, randomInt } from '../utils';
-import { MAX_STATES, type RuleMode } from './config';
+import { MAX_STATES, type RuleMode, type StateArray } from './config';
 
-function isSymmetricCanonical(digits: number[]): boolean {
+function isSymmetricCanonical(digits: ArrayLike<number>): boolean {
   for (let i = 0; 2 * i < digits.length; i++) {
     const a = digits[i];
-    const b = digits[digits.length - 1 - i]
+    const b = digits[digits.length - 1 - i];
     if (a < b) return true;
     if (a > b) return false;
   }
@@ -12,16 +12,17 @@ function isSymmetricCanonical(digits: number[]): boolean {
 }
 
 export function canonicalParents(
-  parents: number[],
+  parents: ArrayLike<number>,
   mode: RuleMode,
-): number[] {
+): StateArray {
+  const copy = Uint8Array.from(parents);
   switch (mode) {
     case 'asymmetric':
-      return parents.slice();
+      return copy;
     case 'symmetric':
-      return isSymmetricCanonical(parents) ? parents.slice() : parents.slice().reverse();
+      return isSymmetricCanonical(copy) ? copy : copy.reverse();
     case 'unordered':
-      return [...parents].sort((a, b) => a - b);
+      return copy.sort((a, b) => a - b);
   }
 }
 
@@ -46,30 +47,30 @@ export function getStateCountForRules(
   numRules: number,
 ): number | null {
   //TODO implement an O(1) calculation
-  if (numRules <= 0) return null
+  if (numRules <= 0) return null;
 
-  let numStates = 1
+  let numStates = 1;
   while (getRuleCountForStates(ruleMode, numParents, numStates) < numRules) {
-    numStates++
-    if (numStates > MAX_STATES) return null
+    numStates++;
+    if (numStates > MAX_STATES) return null;
   }
 
-  const count = getRuleCountForStates(ruleMode, numParents, numStates)
+  const count = getRuleCountForStates(ruleMode, numParents, numStates);
   const prevCount = numStates > 1
     ? getRuleCountForStates(ruleMode, numParents, numStates - 1)
-    : 0
+    : 0;
 
-  if (count < numRules || prevCount >= numRules) return null
-  return numStates
+  if (count < numRules || prevCount >= numRules) return null;
+  return numStates;
 }
 
 function fillPatternsWithMax(
-  patterns: number[][],
+  patterns: StateArray[],
   numParents: number,
   maxState: number,
   ruleMode: RuleMode,
 ): void {
-  const digits = new Array<number>(numParents)
+  const digits = new Uint8Array(numParents);
 
   const recurse = (position: number, hasMax: boolean): void => {
     if (position === numParents) {
@@ -96,7 +97,7 @@ function fillPatternsWithMax(
       digits[position] = digit;
       recurse(position + 1, hasMax || digit === maxState);
     }
-  }
+  };
 
   recurse(0, false);
 }
@@ -105,8 +106,8 @@ export function createRulePatterns(
   ruleMode: RuleMode,
   numParents: number,
   numStates: number,
-): number[][] {
-  const patterns: number[][] = [];
+): StateArray[] {
+  const patterns: StateArray[] = [];
   for (let maxState = 0; maxState < numStates; maxState++) {
     fillPatternsWithMax(patterns, numParents, maxState, ruleMode);
   }
@@ -117,15 +118,15 @@ export function createRuleResolver(
   ruleMode: RuleMode,
   numParents: number,
   numStates: number,
-  rules: number[],
-): (parents: number[]) => number {
+  rules: StateArray,
+): (parents: ArrayLike<number>) => number {
   const patterns = createRulePatterns(ruleMode, numParents, numStates);
   const lookup = new Map<number, number>();
 
-  function encodeParents(parents: number[]): number {
+  function encodeParents(parents: ArrayLike<number>): number {
     let key = 0;
-    for (const state of parents) {
-      key = key * numStates + state;
+    for (let i = 0; i < parents.length; i++) {
+      key = key * numStates + parents[i];
     }
     return key;
   }
@@ -134,8 +135,8 @@ export function createRuleResolver(
     lookup.set(encodeParents(patterns[i]), rules[i] ?? 0);
   }
 
-  return (parents: number[]) => {
-    const canonical = canonicalParents(parents, ruleMode)
+  return (parents: ArrayLike<number>) => {
+    const canonical = canonicalParents(parents, ruleMode);
     return lookup.get(encodeParents(canonical)) ?? randomInt(numStates);
   };
 }
@@ -144,43 +145,41 @@ export function resizeRulesForParents(
   numParents: number,
   numStates: number,
   mode: RuleMode,
-): number[] {
+): StateArray {
   const newCount = getRuleCountForStates(mode, numParents, numStates);
-  return Array.from({ length: newCount }, () => randomInt(numStates))
+  return Uint8Array.from({ length: newCount }, () => randomInt(numStates));
 }
 
 export function applyRuleMode(
-  rules: number[],
+  rules: StateArray,
   numParents: number,
   numStates: number,
   oldMode: RuleMode,
   newMode: RuleMode,
-): number[] {
+): StateArray {
   if (oldMode === newMode) return rules.slice();
 
   const resolver = createRuleResolver(oldMode, numParents, numStates, rules);
   const patterns = createRulePatterns(newMode, numParents, numStates);
-  return patterns.map(resolver);
+  return Uint8Array.from(patterns, pattern => resolver(pattern));
 }
 
 export function normalizeRules(
-  rules: number[],
+  rules: StateArray,
   numParents: number,
   numStates: number,
   mode: RuleMode,
-): number[] {
+): StateArray {
   const newCount = getRuleCountForStates(mode, numParents, numStates);
+  const next = new Uint8Array(newCount);
+  const copyLen = Math.min(rules.length, newCount);
+  next.set(rules.subarray(0, copyLen));
 
-  // Crop the rules to the new count
-  const next = rules.slice(0, newCount);
-
-  // Fill in the rest of the rules with random values
-  while (next.length < newCount) {
-    next.push(randomInt(numStates));
+  for (let i = copyLen; i < newCount; i++) {
+    next[i] = randomInt(numStates);
   }
 
-  // Make sure the states are within the range of the new number of states
-  for (let i = 0; i < next.length; i++) {
+  for (let i = 0; i < copyLen; i++) {
     if (next[i] >= numStates) {
       next[i] = randomInt(numStates);
     }

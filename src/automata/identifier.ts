@@ -1,4 +1,4 @@
-import { MAX_STATES, type AutomataConfig, type RuleMode } from './config';
+import { MAX_STATES, type AutomataConfig, type RuleMode, type StateArray } from './config';
 import {
   getRuleCountForStates,
   getStateCountForRules,
@@ -33,7 +33,7 @@ const RULE_MODE_TO_KEY: Record<RuleMode, string> = {
   unordered: 'U',
 };
 
-const CONFLICTING_KEYS : string[][] = [
+const CONFLICTING_KEYS: string[][] = [
   ['PS', 'PL'],
   ['PS', 'PR'],
   ['A', 'S', 'U'],
@@ -89,18 +89,22 @@ function decodeStateChar(char: string): number | null {
   return null;
 }
 
-function decodeStateString(value: string, numStates: number): number[] | null {
-  const states: number[] = [];
-  for (const char of value) {
-    const state = decodeStateChar(char);
+function decodeStateString(value: string, numStates: number): StateArray | null {
+  const states = new Uint8Array(value.length);
+  for (let i = 0; i < value.length; i++) {
+    const state = decodeStateChar(value[i]);
     if (state === null || state >= numStates) return null;
-    states.push(state);
+    states[i] = state;
   }
   return states;
 }
 
-function encodeStateString(states: number[], numStates: number): string {
-  return states.map(state => encodeStateChar(state, numStates)).join('');
+function encodeStateString(states: ArrayLike<number>, numStates: number): string {
+  let result = '';
+  for (let i = 0; i < states.length; i++) {
+    result += encodeStateChar(states[i], numStates);
+  }
+  return result;
 }
 
 function lookupValueMultipleKeys(map: Map<string, string>, ...keys: string[]): [string, string] | [null, null] {
@@ -112,15 +116,19 @@ function lookupValueMultipleKeys(map: Map<string, string>, ...keys: string[]): [
   return [null, null];
 }
 
-function arraysEqual(a: number[], b: number[]): boolean {
-  return a.length === b.length && a.every((value, index) => value === b[index]);
+function arraysEqual(a: ArrayLike<number>, b: ArrayLike<number>): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) return false;
+  }
+  return true;
 }
 
-function defaultPattern(numParents: number) {
+function defaultPattern(numParents: number): Pick<AutomataConfig, 'padLeft' | 'initial' | 'padRight'> {
   return {
-    padLeft: new Array(Math.max(0, numParents - 1)).fill(0),
-    padRight: new Array(Math.max(0, numParents - 1)).fill(0),
-    initial: new Array(Math.max(1, 2 * numParents - 3)).fill(0),
+    padLeft: new Uint8Array(Math.max(0, numParents - 1)),
+    padRight: new Uint8Array(Math.max(0, numParents - 1)),
+    initial: new Uint8Array(Math.max(1, 2 * numParents - 3)),
   };
 }
 
@@ -199,7 +207,7 @@ export function parseConfigIdentifier(identifier: string): AutomataConfig | null
   if (trimmed.length === 0) return null;
 
   const map = identifierToMap(trimmed);
-  
+
   // check conflicting
 
   for (const keys of CONFLICTING_KEYS) {

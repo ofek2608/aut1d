@@ -2,13 +2,14 @@ export type RuleMode = 'asymmetric' | 'symmetric' | 'unordered';
 
 export const MAX_STATES = 26;
 
-export type AutomataConfig = {
-  numParents: number
-  numStates: number
-  ruleMode: RuleMode
-  rules: number[]
-  initial: number[]
-  padLeft: number[]
-  padRight: number[]
-}
+export type StateArray = Uint8Array;
 
+export type AutomataConfig = {
+  numParents: number;
+  numStates: number;
+  ruleMode: RuleMode;
+  rules: StateArray;
+  initial: StateArray;
+  padLeft: StateArray;
+  padRight: StateArray;
+};

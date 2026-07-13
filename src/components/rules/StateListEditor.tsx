@@ -1,33 +1,36 @@
-import { Index } from 'solid-js'
-import { store, setPadLeft, setPadRight, setInitial } from '../../store'
-import StateInput from './StateInput'
-import styles from './StateListEditor.module.css'
+import { Index } from 'solid-js';
+import { store, setPadLeft, setPadRight, setInitial } from '../../store';
+import type { StateArray } from '../../automata/config';
+import StateInput from './StateInput';
+import styles from './StateListEditor.module.css';
 
 function StateListRow(props: {
-  label: string
-  cells: number[]
-  onChange: (cells: number[]) => void
+  label: string;
+  cells: StateArray;
+  onChange: (cells: StateArray) => void;
 }) {
   function editCell(i: number, newState: number) {
-    const cells = [...props.cells]
-    cells[i] = newState
-    props.onChange(cells)
+    const cells = props.cells.slice();
+    cells[i] = newState;
+    props.onChange(cells);
   }
 
   function add() {
-    props.onChange([...props.cells, 0])
+    const cells = new Uint8Array(props.cells.length + 1);
+    cells.set(props.cells);
+    props.onChange(cells);
   }
 
   function remove() {
-    if (props.cells.length == 0) return
-    props.onChange(props.cells.slice(0, -1))
+    if (props.cells.length == 0) return;
+    props.onChange(props.cells.slice(0, -1));
   }
 
   return (
     <div class={styles.row}>
       <span class={styles.label}>{props.label}</span>
       <div class={styles.cells}>
-        <Index each={props.cells}>
+        <Index each={[...props.cells]}>
           {(state, i) => (
             <StateInput
               value={state()}
@@ -57,7 +60,7 @@ function StateListRow(props: {
         </button>
       </div>
     </div>
-  )
+  );
 }
 
 export default function StateListEditor() {
@@ -67,5 +70,5 @@ export default function StateListEditor() {
       <StateListRow label="Left" cells={store.config.padLeft} onChange={setPadLeft} />
       <StateListRow label="Right" cells={store.config.padRight} onChange={setPadRight} />
     </div>
-  )
+  );
 }
