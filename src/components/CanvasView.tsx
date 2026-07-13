@@ -51,6 +51,7 @@ export default function CanvasView() {
       setPanX(px => cx - centerX - (cx - centerX - px) * ratio)
       setPanY(py => cy - (cy - py) * ratio)
     })
+    maybeExtend()
   }
 
   // Mouse
@@ -135,7 +136,7 @@ export default function CanvasView() {
     const rows = getRows()
     const totalH = rows.length * cs
     const visibleBottom = -panY() + canvasH()
-    if (totalH < visibleBottom + canvasH() * 2) {
+    if (totalH < visibleBottom) {
       extendRows(store.config, rows.length + REGEN_THRESHOLD)
     }
   }
@@ -152,7 +153,6 @@ export default function CanvasView() {
     void c.ruleMode
     const target = untrack(() => Math.max(REGEN_THRESHOLD, Math.ceil(canvasH() / cellSize()) + REGEN_THRESHOLD))
     regenerateRows({ ...c }, target)
-    batch(() => { setPanX(0); setPanY(0) })
   })
 
   // Ensure enough rows when canvas resizes
