@@ -3,6 +3,7 @@ import SidebarSection from '../layout/SidebarSection'
 import AboutSection from './AboutSection'
 import PaletteSelector from './PaletteSelector'
 import AlignmentSelector from './AlignmentSelector'
+import MinPixelSizeSlider from './MinPixelSizeSlider'
 import CustomPaletteEditor from './CustomPaletteEditor'
 import { localStore, CUSTOM_PALETTE } from '../../localStore'
 
@@ -24,6 +25,10 @@ export default function ViewPanel() {
 
       <SidebarSection title="Alignment" icon="align-center">
         <AlignmentSelector />
+      </SidebarSection>
+
+      <SidebarSection title="Rendering" icon="expand">
+        <MinPixelSizeSlider />
       </SidebarSection>
 
       <AboutSection />

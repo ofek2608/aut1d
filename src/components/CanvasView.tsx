@@ -5,13 +5,14 @@ import { localStore, activePalette } from '../localStore'
 // rowWorldStart not needed: per-row alignment uses row.length directly
 
 const BASE_CELL_SIZE = 4
-const MIN_ZOOM = 0.12   // ~0.5px/cell
-const MAX_ZOOM = 8      // ~32px/cell
+const MIN_ZOOM = 0.01
+const MAX_ZOOM = 8
 const REGEN_THRESHOLD = 500
 
 export default function CanvasView() {
   let containerRef!: HTMLDivElement
   let canvasRef!: HTMLCanvasElement
+  let sampleCanvas: HTMLCanvasElement | undefined
   let rafId = 0
 
   const [canvasW, setCanvasW] = createSignal(0)
@@ -21,7 +22,7 @@ export default function CanvasView() {
   const [zoom, setZoom] = createSignal(1.0)
   const [rowTick, setRowTick] = createSignal(0)
 
-  const cellSize = createMemo(() => Math.max(0.5, BASE_CELL_SIZE * zoom()))
+  const cellSize = createMemo(() => BASE_CELL_SIZE * zoom())
 
   onMount(() => {
     onCleanup(onRowsChange(() => setRowTick(t => t + 1)))
@@ -189,6 +190,7 @@ export default function CanvasView() {
     const h = canvasH()
     const rx = canvasW() / 2
     const alignment = localStore.alignment
+    const mps = localStore.minPixelSize
 
     cancelAnimationFrame(rafId)
     rafId = requestAnimationFrame(() => {
@@ -197,43 +199,90 @@ export default function CanvasView() {
 
       ctx.clearRect(0, 0, w, h)
 
-      function fillCell(x: number, y: number, state: number) {
-        ctx.fillStyle = palette[state] ?? '#888888';
-        const x1 = Math.round(x + outline);
-        const y1 = Math.round(y + outline);
-        const x2 = Math.round(x + cs - outline);
-        const y2 = Math.round(y + cs - outline);
-        const width = x2 - x1;
-        const height = y2 - y1;
-        ctx.fillRect(x1, y1, width, height)
-      }
+      if (cs < mps) {
+        const paletteRgb = palette.map(hex => {
+          const color = hex ?? '#888888'
+          return [
+            parseInt(color.slice(1, 3), 16),
+            parseInt(color.slice(3, 5), 16),
+            parseInt(color.slice(5, 7), 16),
+          ]
+        })
+        const fallbackRgb = [0x88, 0x88, 0x88]
+        const iw = Math.ceil(w / mps)
+        const ih = Math.ceil(h / mps)
+        const imageData = new ImageData(iw, ih)
+        const data = imageData.data
+        const half = mps / 2
 
-      const firstRow = Math.max(0, Math.floor(-py / cs))
-      const lastRow = Math.min(rows.length - 1, Math.ceil((h - py) / cs))
+        for (let iy = 0; iy < ih; iy++) {
+          const sy = iy * mps + half
+          const g = Math.floor((sy - py) / cs)
+          if (g < 0 || g >= rows.length) continue
+          const row = rows[g]
+          if (!row) continue
+          const rowLen = row.length
+          const refI = alignment === 'left' ? 0
+            : alignment === 'right' ? rowLen - 1
+            : rowLen / 2
 
-      for (let g = firstRow; g <= lastRow; g++) {
-        const row = rows[g]
-        if (!row) continue
-        const rowLen = row.length
+          for (let ix = 0; ix < iw; ix++) {
+            const sx = ix * mps + half
+            const c = Math.floor(refI + (sx - rx - px) / cs)
+            if (c < 0 || c >= rowLen) continue
+            const rgb = paletteRgb[row[c]] ?? fallbackRgb
+            const off = (iy * iw + ix) * 4
+            data[off] = rgb[0]
+            data[off + 1] = rgb[1]
+            data[off + 2] = rgb[2]
+            data[off + 3] = 255
+          }
+        }
 
-        // Reference cell index for this row
-        const refI = alignment === 'left' ? 0
-          : alignment === 'right' ? rowLen - 1
-          : rowLen / 2
+        if (!sampleCanvas) sampleCanvas = document.createElement('canvas')
+        if (sampleCanvas.width !== iw) sampleCanvas.width = iw
+        if (sampleCanvas.height !== ih) sampleCanvas.height = ih
+        const sampleCtx = sampleCanvas.getContext('2d')!
+        sampleCtx.putImageData(imageData, 0, 0)
+        ctx.imageSmoothingEnabled = false
+        ctx.drawImage(sampleCanvas, 0, 0, iw * mps, ih * mps)
+      } else {
+        function fillCell(x: number, y: number, state: number) {
+          ctx.fillStyle = palette[state] ?? '#888888';
+          const x1 = Math.round(x + outline);
+          const y1 = Math.round(y + outline);
+          const x2 = Math.round(x + cs - outline);
+          const y2 = Math.round(y + cs - outline);
+          const width = x2 - x1;
+          const height = y2 - y1;
+          ctx.fillRect(x1, y1, width, height)
+        }
 
-        // Visible cell range: rx + px + (i - refI) * cs in [0, w]
-        const iMin = Math.max(0, Math.floor(refI + (-rx - px) / cs))
-        const iMax = Math.min(rowLen - 1, Math.ceil(refI + (w - rx - px) / cs))
-        if (iMin > iMax) continue
+        const firstRow = Math.max(0, Math.floor(-py / cs))
+        const lastRow = Math.min(rows.length - 1, Math.ceil((h - py) / cs))
 
-        const y = py + g * cs
+        for (let g = firstRow; g <= lastRow; g++) {
+          const row = rows[g]
+          if (!row) continue
+          const rowLen = row.length
 
-        let c = iMin
-        while (c <= iMax) {
-          const state = row[c]
-          let end = c + 1
-          fillCell(rx + px + (c - refI) * cs, y, state)
-          c = end
+          const refI = alignment === 'left' ? 0
+            : alignment === 'right' ? rowLen - 1
+            : rowLen / 2
+
+          const iMin = Math.max(0, Math.floor(refI + (-rx - px) / cs))
+          const iMax = Math.min(rowLen - 1, Math.ceil(refI + (w - rx - px) / cs))
+          if (iMin > iMax) continue
+
+          const y = py + g * cs
+
+          let c = iMin
+          while (c <= iMax) {
+            const state = row[c]
+            let end = c + 1
+            fillCell(rx + px + (c - refI) * cs, y, state)
+            c = end
+          }
         }
       }
     })

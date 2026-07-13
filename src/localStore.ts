@@ -20,6 +20,7 @@ interface LocalState {
   alignment: Alignment;
   palette: string;
   customColors: string[];
+  minPixelSize: number;
 }
 
 function defaultCustomColors(length: number): string[] {
@@ -30,7 +31,13 @@ const DEFAULT_LOCAL: LocalState = {
   alignment: 'center',
   palette: 'classic',
   customColors: defaultCustomColors(2),
+  minPixelSize: 2,
 };
+
+function clampMinPixelSize(value: unknown): number {
+  if (typeof value !== 'number' || !Number.isInteger(value)) return DEFAULT_LOCAL.minPixelSize;
+  return Math.max(1, Math.min(8, value));
+}
 
 function isAlignment(value: unknown): value is Alignment {
   return value === 'left' || value === 'center' || value === 'right';
@@ -57,7 +64,9 @@ function loadLocalState(): LocalState {
       ? parsed.customColors
       : defaultCustomColors(2);
 
-    return { alignment, palette, customColors };
+    const minPixelSize = clampMinPixelSize(parsed.minPixelSize);
+
+    return { alignment, palette, customColors, minPixelSize };
   } catch {
     return { ...DEFAULT_LOCAL, customColors: defaultCustomColors(2) };
   }
@@ -71,6 +80,7 @@ createRoot(() => {
       alignment: localStore.alignment,
       palette: localStore.palette,
       customColors: [...localStore.customColors],
+      minPixelSize: localStore.minPixelSize,
     };
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
@@ -82,6 +92,10 @@ createRoot(() => {
 
 export function setAlignment(a: Alignment) {
   setLocalStore('alignment', a);
+}
+
+export function setMinPixelSize(value: number) {
+  setLocalStore('minPixelSize', clampMinPixelSize(value));
 }
 
 export function setPalette(name: string) {
