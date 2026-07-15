@@ -146,8 +146,8 @@ export default function CanvasView() {
     const c = store.config
     void c.rules.slice()
     void c.initial.slice()
-    void c.padLeft.slice()
-    void c.padRight.slice()
+    void c.padLeft.map(frame => frame.slice())
+    void c.padRight.map(frame => frame.slice())
     void c.numParents
     void c.numStates
     void c.ruleMode

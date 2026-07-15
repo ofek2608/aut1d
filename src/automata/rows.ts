@@ -29,7 +29,12 @@ export function regenerateRows(config: AutomataConfig, targetCount = DEFAULT_BAT
 
 export function extendRows(config: AutomataConfig, targetCount: number) {
   if (rows.length >= targetCount) return;
-  const more = automataStepBatch(config, rows[rows.length - 1], targetCount - rows.length);
+  const more = automataStepBatch(
+    config,
+    rows[rows.length - 1],
+    targetCount - rows.length,
+    rows.length,
+  );
   rows.push(...more);
   notify();
 }

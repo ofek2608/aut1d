@@ -1,4 +1,4 @@
-import { MAX_STATES, type AutomataConfig, type RuleMode, type StateArray } from './config';
+import { MAX_STATES, type AutomataConfig, type StateSequence, type RuleMode, type StateArray } from './config';
 import {
   getRuleCountForStates,
   getStateCountForRules,
@@ -14,9 +14,9 @@ export const IDENTIFIER_KEYS: IdentifierKeyInfo[] = [
   { key: 'A', description: 'Asymmetric parents' },
   { key: 'U', description: 'Unordered parents' },
   { key: 'I', description: 'Initial row' },
-  { key: 'PS', description: 'Symmetric padding' },
-  { key: 'PL', description: 'Left padding' },
-  { key: 'PR', description: 'Right padding' },
+  { key: 'PS', description: 'Symmetric padding (dot-separated sequence)' },
+  { key: 'PL', description: 'Left padding (dot-separated sequence)' },
+  { key: 'PR', description: 'Right padding (dot-separated sequence)' },
   { key: '#', description: 'Rule table' },
   { key: 'R', description: 'Alias for #' },
 ];
@@ -107,6 +107,29 @@ function encodeStateString(states: ArrayLike<number>, numStates: number): string
   return result;
 }
 
+function decodeStateSequence(value: string, numStates: number): StateSequence | null {
+  const parts = value.split('.');
+  const sequence: StateSequence = [];
+  for (const part of parts) {
+    const states = decodeStateString(part, numStates);
+    if (states === null) return null;
+    sequence.push(states);
+  }
+  return sequence;
+}
+
+function encodeStateSequence(sequence: StateSequence, numStates: number): string {
+  return sequence.map(states => encodeStateString(states, numStates)).join('.');
+}
+
+function reverseStates(states: StateArray): StateArray {
+  return states.slice().reverse();
+}
+
+function mirrorPadSequence(sequence: StateSequence): StateSequence {
+  return sequence.map(reverseStates);
+}
+
 function lookupValueMultipleKeys(map: Map<string, string>, ...keys: string[]): [string, string] | [null, null] {
   for (const key of keys) {
     if (map.has(key)) {
@@ -116,18 +139,11 @@ function lookupValueMultipleKeys(map: Map<string, string>, ...keys: string[]): [
   return [null, null];
 }
 
-function arraysEqual(a: ArrayLike<number>, b: ArrayLike<number>): boolean {
-  if (a.length !== b.length) return false;
-  for (let i = 0; i < a.length; i++) {
-    if (a[i] !== b[i]) return false;
-  }
-  return true;
-}
-
 function defaultPattern(numParents: number): Pick<AutomataConfig, 'padLeft' | 'initial' | 'padRight'> {
+  const padWidth = Math.max(0, numParents - 1);
   return {
-    padLeft: new Uint8Array(Math.max(0, numParents - 1)),
-    padRight: new Uint8Array(Math.max(0, numParents - 1)),
+    padLeft: [new Uint8Array(padWidth)],
+    padRight: [new Uint8Array(padWidth)],
     initial: new Uint8Array(Math.max(1, 2 * numParents - 3)),
   };
 }
@@ -137,27 +153,30 @@ function configToIdentifierMap(config: AutomataConfig): Map<string, string> {
   map.set(RULE_MODE_TO_KEY[config.ruleMode], String(config.numParents));
 
   const defaults = defaultPattern(config.numParents);
+  const { numStates } = config;
 
-  if (!arraysEqual(config.initial, defaults.initial)) {
-    map.set('I', encodeStateString(config.initial, config.numStates));
+  const initialEncoded = encodeStateString(config.initial, numStates);
+  if (initialEncoded !== encodeStateString(defaults.initial, numStates)) {
+    map.set('I', initialEncoded);
   }
 
-  const hasSymmetricPadding = arraysEqual(config.padRight, config.padLeft.slice().reverse());
-  const padLeftIsDefault = arraysEqual(config.padLeft, defaults.padLeft);
-  const padRightIsDefault = arraysEqual(config.padRight, defaults.padRight);
+  const padLeftEncoded = encodeStateSequence(config.padLeft, numStates);
+  const padRightEncoded = encodeStateSequence(config.padRight, numStates);
+  const defaultPadEncoded = encodeStateSequence(defaults.padLeft, numStates);
+  const hasSymmetricPadding = padRightEncoded === encodeStateSequence(mirrorPadSequence(config.padLeft), numStates);
 
-  if (hasSymmetricPadding && !padLeftIsDefault) {
-    map.set('PS', encodeStateString(config.padLeft, config.numStates));
+  if (hasSymmetricPadding && padLeftEncoded !== defaultPadEncoded) {
+    map.set('PS', padLeftEncoded);
   } else {
-    if (!padLeftIsDefault) {
-      map.set('PL', encodeStateString(config.padLeft, config.numStates));
+    if (padLeftEncoded !== defaultPadEncoded) {
+      map.set('PL', padLeftEncoded);
     }
-    if (!padRightIsDefault) {
-      map.set('PR', encodeStateString(config.padRight, config.numStates));
+    if (padRightEncoded !== defaultPadEncoded) {
+      map.set('PR', padRightEncoded);
     }
   }
 
-  map.set('#', encodeStateString(config.rules, config.numStates));
+  map.set('#', encodeStateString(config.rules, numStates));
   return map;
 }
 
@@ -169,20 +188,20 @@ function parsePatternFromMap(
   const pattern = defaultPattern(numParents);
 
   if (map.has('PS')) {
-    const padLeft = decodeStateString(map.get('PS')!, numStates);
+    const padLeft = decodeStateSequence(map.get('PS')!, numStates);
     if (padLeft === null) return null;
     pattern.padLeft = padLeft;
-    pattern.padRight = padLeft.slice().reverse();
+    pattern.padRight = mirrorPadSequence(padLeft);
   }
 
   if (map.has('PL')) {
-    const padLeft = decodeStateString(map.get('PL')!, numStates);
+    const padLeft = decodeStateSequence(map.get('PL')!, numStates);
     if (padLeft === null) return null;
     pattern.padLeft = padLeft;
   }
 
   if (map.has('PR')) {
-    const padRight = decodeStateString(map.get('PR')!, numStates);
+    const padRight = decodeStateSequence(map.get('PR')!, numStates);
     if (padRight === null) return null;
     pattern.padRight = padRight;
   }

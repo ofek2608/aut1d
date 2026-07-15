@@ -1,5 +1,5 @@
 import { createStore, produce } from 'solid-js/store';
-import { MAX_STATES, type AutomataConfig, type RuleMode, type StateArray } from './automata/config';
+import { MAX_STATES, type AutomataConfig, type StateSequence, type RuleMode, type StateArray } from './automata/config';
 import {
   applyRuleMode,
   normalizeRules,
@@ -9,6 +9,10 @@ import {
 import { randomInt } from './utils';
 import { parseConfigIdentifier } from './automata/identifier';
 import { ensureCustomColorsLength } from './localStore';
+
+function clonePadSequence(sequence: StateSequence): StateSequence {
+  return sequence.map(frame => frame.slice());
+}
 
 function readConfigFromUrl() {
   try {
@@ -40,8 +44,8 @@ export function applyConfig(config: AutomataConfig) {
       ...config,
       rules: normalizeRules(config.rules, config.numParents, config.numStates, config.ruleMode),
       initial: config.initial.slice(),
-      padLeft: config.padLeft.slice(),
-      padRight: config.padRight.slice(),
+      padLeft: clonePadSequence(config.padLeft),
+      padRight: clonePadSequence(config.padRight),
     };
   }));
   ensureCustomColorsLength(config.numStates);
@@ -53,8 +57,8 @@ export function setNumParents(n: number) {
     s.config.numParents = n;
     s.config.rules = resizeRulesForParents(n, numStates, ruleMode);
     s.config.initial = new Uint8Array(2 * n - 3);
-    s.config.padLeft = new Uint8Array(n - 1);
-    s.config.padRight = new Uint8Array(n - 1);
+    s.config.padLeft = [new Uint8Array(n - 1)];
+    s.config.padRight = [new Uint8Array(n - 1)];
   }));
 }
 
@@ -100,12 +104,12 @@ export function setInitial(cells: StateArray) {
   setStore('config', 'initial', cells);
 }
 
-export function setPadLeft(cells: StateArray) {
-  setStore('config', 'padLeft', cells);
+export function setPadLeft(sequence: StateSequence) {
+  setStore('config', 'padLeft', clonePadSequence(sequence));
 }
 
-export function setPadRight(cells: StateArray) {
-  setStore('config', 'padRight', cells);
+export function setPadRight(sequence: StateSequence) {
+  setStore('config', 'padRight', clonePadSequence(sequence));
 }
 
 export function setSelectedState(state: number) {
