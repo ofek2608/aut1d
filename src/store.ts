@@ -1,5 +1,5 @@
 import { createStore, produce } from 'solid-js/store';
-import { MAX_STATES, type AutomataConfig, type StateSequence, type RuleMode, type StateArray } from './automata/config';
+import { MAX_STATES, type AutomataConfig, type CellMods, type StateSequence, type RuleMode, type StateArray } from './automata/config';
 import {
   applyRuleMode,
   normalizeRules,
@@ -12,6 +12,10 @@ import { ensureCustomColorsLength } from './localStore';
 
 function clonePadSequence(sequence: StateSequence): StateSequence {
   return sequence.map(frame => frame.slice());
+}
+
+function cloneMods(mods: CellMods): CellMods {
+  return { ...mods };
 }
 
 function readConfigFromUrl() {
@@ -46,6 +50,7 @@ export function applyConfig(config: AutomataConfig) {
       initial: config.initial.slice(),
       padLeft: clonePadSequence(config.padLeft),
       padRight: clonePadSequence(config.padRight),
+      mods: cloneMods(config.mods),
     };
   }));
   ensureCustomColorsLength(config.numStates);
@@ -59,6 +64,7 @@ export function setNumParents(n: number) {
     s.config.initial = new Uint8Array(2 * n - 3);
     s.config.padLeft = [new Uint8Array(n - 1)];
     s.config.padRight = [new Uint8Array(n - 1)];
+    s.config.mods = {};
   }));
 }
 
@@ -110,6 +116,33 @@ export function setPadLeft(sequence: StateSequence) {
 
 export function setPadRight(sequence: StateSequence) {
   setStore('config', 'padRight', clonePadSequence(sequence));
+}
+
+export function setCellMod(x: number, y: number, state: number) {
+  const key = `${x},${y}` as const;
+  if (store.config.mods[key] === state) return;
+  setStore(produce(s => {
+    s.config.mods = { ...s.config.mods, [key]: state };
+  }));
+}
+
+export function clearCellMod(x: number, y: number) {
+  const key = `${x},${y}` as const;
+  if (store.config.mods[key] === undefined) return;
+  setStore(produce(s => {
+    const next: CellMods = { ...s.config.mods };
+    delete next[key];
+    s.config.mods = next;
+  }));
+}
+
+export function clearMods() {
+  for (const _ in store.config.mods) {
+    setStore(produce(s => {
+      s.config.mods = {};
+    }));
+    return;
+  }
 }
 
 export function setSelectedState(state: number) {

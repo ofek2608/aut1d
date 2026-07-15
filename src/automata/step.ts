@@ -1,5 +1,6 @@
 import type { AutomataConfig, StateArray } from "./config";
 import { createRuleResolver } from "./rules";
+import { applyModsToRow } from "./mods";
 
 function automataStep0(
   config: AutomataConfig,
@@ -16,7 +17,7 @@ function automataStep0(
     result[padLeft.length + i] = resolver(world.subarray(i, i + config.numParents));
   }
   result.set(padRight, padLeft.length + midLen);
-  return result;
+  return applyModsToRow(result, row, config.mods);
 }
 
 export function automataStep(config: AutomataConfig, world: StateArray, row: number = 1): StateArray {

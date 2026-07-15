@@ -1,5 +1,6 @@
 import type { AutomataConfig, StateArray } from './config';
 import { automataStepBatch } from './step';
+import { applyModsToRow } from './mods';
 
 const DEFAULT_BATCH = 500;
 
@@ -23,7 +24,8 @@ export function onRowsChange(listener: () => void): () => void {
 
 export function regenerateRows(config: AutomataConfig, targetCount = DEFAULT_BATCH) {
   const initial = config.initial.slice();
-  rows = [initial, ...automataStepBatch(config, initial, targetCount)];
+  applyModsToRow(initial, 0, config.mods);
+  rows = [initial, ...automataStepBatch(config, initial, targetCount, 1)];
   notify();
 }
 

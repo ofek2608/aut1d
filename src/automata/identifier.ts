@@ -1,4 +1,4 @@
-import { MAX_STATES, type AutomataConfig, type StateSequence, type RuleMode, type StateArray } from './config';
+import { MAX_STATES, type AutomataConfig, type CellMods, type StateSequence, type RuleMode, type StateArray } from './config';
 import {
   getRuleCountForStates,
   getStateCountForRules,
@@ -17,6 +17,7 @@ export const IDENTIFIER_KEYS: IdentifierKeyInfo[] = [
   { key: 'PS', description: 'Symmetric padding (dot-separated sequence)' },
   { key: 'PL', description: 'Left padding (dot-separated sequence)' },
   { key: 'PR', description: 'Right padding (dot-separated sequence)' },
+  { key: 'MOD', description: 'Overridden cells as x.y.s triples' },
   { key: '#', description: 'Rule table' },
   { key: 'R', description: 'Alias for #' },
 ];
@@ -122,6 +123,37 @@ function encodeStateSequence(sequence: StateSequence, numStates: number): string
   return sequence.map(states => encodeStateString(states, numStates)).join('.');
 }
 
+function encodeMods(mods: CellMods): string {
+  const entries: { x: number; y: number; s: number }[] = [];
+  for (const [key, s] of Object.entries(mods)) {
+    const comma = key.indexOf(',');
+    if (comma < 0) continue;
+    entries.push({
+      x: Number(key.slice(0, comma)),
+      y: Number(key.slice(comma + 1)),
+      s,
+    });
+  }
+  entries.sort((a, b) => a.y - b.y || a.x - b.x || a.s - b.s);
+  return entries.flatMap(e => [e.x, e.y, e.s]).join('.');
+}
+
+function decodeMods(value: string, numStates: number): CellMods | null {
+  if (value.length === 0) return {};
+  const parts = value.split('.');
+  if (parts.length % 3 !== 0) return null;
+  const mods: CellMods = {};
+  for (let i = 0; i < parts.length; i += 3) {
+    const x = Number(parts[i]);
+    const y = Number(parts[i + 1]);
+    const s = Number(parts[i + 2]);
+    if (!Number.isInteger(x) || !Number.isInteger(y) || !Number.isInteger(s)) return null;
+    if (x < 0 || y < 0 || s < 0 || s >= numStates) return null;
+    mods[`${x},${y}`] = s;
+  }
+  return mods;
+}
+
 function reverseStates(states: StateArray): StateArray {
   return states.slice().reverse();
 }
@@ -174,6 +206,10 @@ function configToIdentifierMap(config: AutomataConfig): Map<string, string> {
     if (padRightEncoded !== defaultPadEncoded) {
       map.set('PR', padRightEncoded);
     }
+  }
+
+  if (Object.keys(config.mods).length > 0) {
+    map.set('MOD', encodeMods(config.mods));
   }
 
   map.set('#', encodeStateString(config.rules, numStates));
@@ -259,6 +295,15 @@ export function parseConfigIdentifier(identifier: string): AutomataConfig | null
   const pattern = parsePatternFromMap(map, numParents, numStates);
   if (!pattern) return null;
 
+  // mods
+
+  let mods: CellMods = {};
+  if (map.has('MOD')) {
+    const parsedMods = decodeMods(map.get('MOD')!, numStates);
+    if (parsedMods === null) return null;
+    mods = parsedMods;
+  }
+
   // combine all
 
   return {
@@ -267,5 +312,6 @@ export function parseConfigIdentifier(identifier: string): AutomataConfig | null
     ruleMode,
     rules,
     ...pattern,
+    mods,
   };
 }

@@ -1,13 +1,16 @@
-import { batch, createEffect, createMemo, createSignal, onCleanup, onMount, untrack } from 'solid-js'
-import { store } from '../store'
+import { Show, batch, createEffect, createMemo, createSignal, onCleanup, onMount, untrack } from 'solid-js'
+import { store, setCellMod, clearCellMod, clearMods } from '../store'
 import { getRows, onRowsChange, regenerateRows, extendRows } from '../automata/rows'
 import { localStore, activePalette } from '../localStore'
-// rowWorldStart not needed: per-row alignment uses row.length directly
 
 const BASE_CELL_SIZE = 4
 const MIN_ZOOM = 0.01
 const MAX_ZOOM = 8
 const REGEN_THRESHOLD = 500
+const MIN_WARN_CLEAR = 5
+
+type HoveredCell = { row: number; col: number; state: number }
+type Tool = 'move' | 'pen' | 'eraser'
 
 export default function CanvasView() {
   let containerRef!: HTMLDivElement
@@ -21,15 +24,24 @@ export default function CanvasView() {
   const [panY, setPanY] = createSignal(0)
   const [zoom, setZoom] = createSignal(1.0)
   const [rowTick, setRowTick] = createSignal(0)
+  const [hovered, setHovered] = createSignal<HoveredCell | null>(null)
+  const [tool, setTool] = createSignal<Tool>('move')
 
   const cellSize = createMemo(() => BASE_CELL_SIZE * zoom())
+  const drawingTool = createMemo(() => tool() === 'pen' || tool() === 'eraser')
+  const hasMods = createMemo(() => {
+    for (const _ in store.config.mods) return true
+    return false
+  })
 
   onMount(() => {
     onCleanup(onRowsChange(() => setRowTick(t => t + 1)))
   })
 
-  // Pan state
+  // Pan / paint state
   let dragging = false
+  let painting = false
+  let lastPaintKey = ''
   let lastX = 0, lastY = 0
 
   // Pinch state
@@ -39,6 +51,57 @@ export default function CanvasView() {
   function getPos(clientX: number, clientY: number) {
     const rect = containerRef.getBoundingClientRect()
     return { x: clientX - rect.left, y: clientY - rect.top }
+  }
+
+  function cellAt(sx: number, sy: number): HoveredCell | null {
+    const cs = cellSize()
+    const rows = getRows()
+    const g = Math.floor((sy - panY()) / cs)
+    if (g < 0 || g >= rows.length) return null
+    const row = rows[g]
+    if (!row) return null
+    const rowLen = row.length
+    const alignment = localStore.alignment
+    const refI = alignment === 'left' ? 0
+      : alignment === 'right' ? rowLen - 1
+      : rowLen / 2
+    const c = Math.floor(refI + (sx - canvasW() / 2 - panX()) / cs)
+    if (c < 0 || c >= rowLen) return null
+    return { row: g, col: c, state: row[c] }
+  }
+
+  function updateHover(clientX: number, clientY: number) {
+    const { x, y } = getPos(clientX, clientY)
+    const next = cellAt(x, y)
+    const prev = hovered()
+    if (
+      next === null && prev === null ||
+      next !== null && prev !== null &&
+      next.row === prev.row && next.col === prev.col && next.state === prev.state
+    ) return
+    setHovered(next)
+  }
+
+  function paintAt(clientX: number, clientY: number) {
+    const { x, y } = getPos(clientX, clientY)
+    const cell = cellAt(x, y)
+    if (!cell) return
+    const key = `${cell.col},${cell.row}`
+    if (key === lastPaintKey) return
+    lastPaintKey = key
+    if (tool() === 'eraser') {
+      clearCellMod(cell.col, cell.row)
+    } else {
+      const state = Math.max(0, Math.min(store.config.numStates - 1, store.selectedState))
+      setCellMod(cell.col, cell.row, state)
+      setHovered({ row: cell.row, col: cell.col, state })
+      return
+    }
+    updateHover(clientX, clientY)
+  }
+
+  function isControlTarget(target: EventTarget | null) {
+    return target instanceof Element && target.closest('button') != null
   }
 
   function applyZoom(factor: number, cx: number, cy: number) {
@@ -56,19 +119,42 @@ export default function CanvasView() {
 
   // Mouse
   function onMouseDown(e: MouseEvent) {
+    if (isControlTarget(e.target)) return
+    if (drawingTool()) {
+      painting = true
+      lastPaintKey = ''
+      paintAt(e.clientX, e.clientY)
+      return
+    }
     dragging = true
     lastX = e.clientX
     lastY = e.clientY
   }
   function onMouseMove(e: MouseEvent) {
-    if (!dragging) return
-    setPanX(x => x + e.clientX - lastX)
-    setPanY(y => y + e.clientY - lastY)
-    lastX = e.clientX
-    lastY = e.clientY
-    maybeExtend()
+    if (painting) {
+      paintAt(e.clientX, e.clientY)
+      return
+    }
+    if (dragging) {
+      setPanX(x => x + e.clientX - lastX)
+      setPanY(y => y + e.clientY - lastY)
+      lastX = e.clientX
+      lastY = e.clientY
+      maybeExtend()
+    }
+    updateHover(e.clientX, e.clientY)
   }
-  function onMouseUp() { dragging = false }
+  function onMouseUp() {
+    dragging = false
+    painting = false
+    lastPaintKey = ''
+  }
+  function onMouseLeave() {
+    dragging = false
+    painting = false
+    lastPaintKey = ''
+    setHovered(null)
+  }
 
   function onWheel(e: WheelEvent) {
     e.preventDefault()
@@ -85,22 +171,38 @@ export default function CanvasView() {
     e.preventDefault()
     if (e.touches.length === 1) {
       pinching = false
-      dragging = true
       lastX = e.touches[0].clientX
       lastY = e.touches[0].clientY
+      if (drawingTool()) {
+        dragging = false
+        painting = true
+        lastPaintKey = ''
+        paintAt(lastX, lastY)
+      } else {
+        painting = false
+        dragging = true
+        updateHover(lastX, lastY)
+      }
     } else if (e.touches.length === 2) {
       dragging = false
+      painting = false
+      lastPaintKey = ''
       pinching = true
       const t0 = e.touches[0], t1 = e.touches[1]
       lastDist = Math.hypot(t0.clientX - t1.clientX, t0.clientY - t1.clientY)
       lastMidX = (t0.clientX + t1.clientX) / 2
       lastMidY = (t0.clientY + t1.clientY) / 2
+      updateHover(lastMidX, lastMidY)
     }
   }
 
   function onTouchMove(e: TouchEvent) {
     e.preventDefault()
-    if (e.touches.length === 1 && dragging) {
+    if (e.touches.length === 1 && painting) {
+      lastX = e.touches[0].clientX
+      lastY = e.touches[0].clientY
+      paintAt(lastX, lastY)
+    } else if (e.touches.length === 1 && dragging) {
       const dx = e.touches[0].clientX - lastX
       const dy = e.touches[0].clientY - lastY
       lastX = e.touches[0].clientX
@@ -108,6 +210,7 @@ export default function CanvasView() {
       setPanX(x => x + dx)
       setPanY(y => y + dy)
       maybeExtend()
+      updateHover(lastX, lastY)
     } else if (e.touches.length === 2 && pinching) {
       const t0 = e.touches[0], t1 = e.touches[1]
       const dist = Math.hypot(t0.clientX - t1.clientX, t0.clientY - t1.clientY)
@@ -123,12 +226,28 @@ export default function CanvasView() {
       lastMidX = midX
       lastMidY = midY
       maybeExtend()
+      updateHover(midX, midY)
     }
   }
 
   function onTouchEnd(e: TouchEvent) {
-    if (e.touches.length === 0) { dragging = false; pinching = false }
-    else if (e.touches.length === 1) { pinching = false }
+    if (e.touches.length === 0) {
+      dragging = false
+      painting = false
+      pinching = false
+      lastPaintKey = ''
+      setHovered(null)
+    } else if (e.touches.length === 1) {
+      pinching = false
+      painting = false
+      lastPaintKey = ''
+      if (tool() === 'move') {
+        dragging = true
+        lastX = e.touches[0].clientX
+        lastY = e.touches[0].clientY
+      }
+      updateHover(e.touches[0].clientX, e.touches[0].clientY)
+    }
   }
 
   function maybeExtend() {
@@ -148,11 +267,13 @@ export default function CanvasView() {
     void c.initial.slice()
     void c.padLeft.map(frame => frame.slice())
     void c.padRight.map(frame => frame.slice())
+    void hasMods()
+    for (const key in c.mods) void c.mods[key as keyof typeof c.mods]
     void c.numParents
     void c.numStates
     void c.ruleMode
     const target = untrack(() => Math.max(REGEN_THRESHOLD, Math.ceil(canvasH() / cellSize()) + REGEN_THRESHOLD))
-    regenerateRows({ ...c }, target)
+    regenerateRows({ ...c, mods: { ...c.mods } }, target)
   })
 
   // Ensure enough rows when canvas resizes
@@ -160,7 +281,7 @@ export default function CanvasView() {
     const h = canvasH()
     if (h === 0) return
     const target = untrack(() => Math.ceil(h / cellSize()) + REGEN_THRESHOLD)
-    extendRows({ ...store.config }, target)
+    extendRows({ ...store.config, mods: { ...store.config.mods } }, target)
   })
 
   // ResizeObserver
@@ -182,7 +303,6 @@ export default function CanvasView() {
     rowTick()
     const rows = getRows()
     const cs = cellSize()
-    const outline = cs < 10 ? 0 : 1;
     const palette = activePalette()
     const px = panX()
     const py = panY()
@@ -191,6 +311,8 @@ export default function CanvasView() {
     const rx = canvasW() / 2
     const alignment = localStore.alignment
     const mps = localStore.minPixelSize
+    const mods = store.config.mods
+    void hasMods()
 
     cancelAnimationFrame(rafId)
     rafId = requestAnimationFrame(() => {
@@ -247,15 +369,20 @@ export default function CanvasView() {
         ctx.imageSmoothingEnabled = false
         ctx.drawImage(sampleCanvas, 0, 0, iw * mps, ih * mps)
       } else {
-        function fillCell(x: number, y: number, state: number) {
-          ctx.fillStyle = palette[state] ?? '#888888';
-          const x1 = Math.round(x + outline);
-          const y1 = Math.round(y + outline);
-          const x2 = Math.round(x + cs - outline);
-          const y2 = Math.round(y + cs - outline);
-          const width = x2 - x1;
-          const height = y2 - y1;
-          ctx.fillRect(x1, y1, width, height)
+        // Background is #16171d; lighten ~18% toward white for cell outlines.
+        const OUTLINE_FILL = '#898a91'
+        const outline = cs < 10 ? 0 : 1
+        function fillCell(x: number, y: number, state: number, withOutline: boolean) {
+          const x0 = Math.round(x)
+          const y0 = Math.round(y)
+          const x1 = Math.round(x + cs)
+          const y1 = Math.round(y + cs)
+          if (withOutline && outline > 0) {
+            ctx.fillStyle = OUTLINE_FILL
+            ctx.fillRect(x0, y0, x1 - x0, y1 - y0)
+          }
+          ctx.fillStyle = palette[state] ?? '#888888'
+          ctx.fillRect(x0 + outline, y0 + outline, x1 - x0 - 2 * outline, y1 - y0 - 2 * outline)
         }
 
         const firstRow = Math.max(0, Math.floor(-py / cs))
@@ -280,7 +407,7 @@ export default function CanvasView() {
           while (c <= iMax) {
             const state = row[c]
             let end = c + 1
-            fillCell(rx + px + (c - refI) * cs, y, state)
+            fillCell(rx + px + (c - refI) * cs, y, state, `${c},${g}` in mods)
             c = end
           }
         }
@@ -294,14 +421,27 @@ export default function CanvasView() {
   function zoomOut() { applyZoom(1 / 1.5, canvasW() / 2, canvasH() / 2) }
   function resetView() { batch(() => { setPanX(0); setPanY(0); setZoom(1.0) }) }
 
+  function handleClearMods() {
+    let count = 0
+    for (const _ in store.config.mods) count++
+    if (count > MIN_WARN_CLEAR) {
+      const confirmed = window.confirm(
+        `Clear ${count} painted cells? This cannot be undone.`,
+      )
+      if (!confirmed) return
+    }
+    clearMods()
+  }
+
   return (
     <div
       ref={containerRef!}
       class="canvas-container"
+      classList={{ 'tool-draw': drawingTool() }}
       onMouseDown={onMouseDown}
       onMouseMove={onMouseMove}
       onMouseUp={onMouseUp}
-      onMouseLeave={onMouseUp}
+      onMouseLeave={onMouseLeave}
     >
       <canvas
         ref={canvasRef!}
@@ -311,7 +451,59 @@ export default function CanvasView() {
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
       />
+      <Show when={hovered()}>
+        {cell => (
+          <div class="canvas-hover" aria-live="polite">
+            <span
+              class="canvas-hover-swatch"
+              style={{ background: activePalette()[cell().state] ?? '#888888' }}
+            />
+            <span class="canvas-hover-text">
+              {cell().col}, {cell().row}: {cell().state}
+            </span>
+          </div>
+        )}
+      </Show>
       <div class="canvas-controls">
+        <button
+          class="ctrl-btn"
+          classList={{ selected: tool() === 'move' }}
+          onClick={() => setTool('move')}
+          aria-label="Move tool"
+          aria-pressed={tool() === 'move'}
+          title="Move"
+        >
+          <i class="fa-solid fa-hand" aria-hidden="true" />
+        </button>
+        <button
+          class="ctrl-btn"
+          classList={{ selected: tool() === 'pen' }}
+          onClick={() => setTool('pen')}
+          aria-label="Pen tool"
+          aria-pressed={tool() === 'pen'}
+          title="Pen"
+        >
+          <i class="fa-solid fa-pen" aria-hidden="true" />
+        </button>
+        <button
+          class="ctrl-btn"
+          classList={{ selected: tool() === 'eraser' }}
+          onClick={() => setTool('eraser')}
+          aria-label="Eraser tool"
+          aria-pressed={tool() === 'eraser'}
+          title="Eraser"
+        >
+          <i class="fa-solid fa-eraser" aria-hidden="true" />
+        </button>
+        <button
+          class="ctrl-btn"
+          onClick={handleClearMods}
+          disabled={!hasMods()}
+          aria-label="Clear painted cells"
+          title="Clear painted cells"
+        >
+          <i class="fa-solid fa-trash-can" aria-hidden="true" />
+        </button>
         <button class="ctrl-btn" onClick={zoomIn} aria-label="Zoom in" title="Zoom in">
           <i class="fa-solid fa-magnifying-glass-plus" aria-hidden="true" />
         </button>
