@@ -5,6 +5,7 @@ import PaletteSelector from './PaletteSelector'
 import AlignmentSelector from './AlignmentSelector'
 import MinPixelSizeSlider from './MinPixelSizeSlider'
 import CustomPaletteEditor from './CustomPaletteEditor'
+import RustRenderToggle from './RustRenderToggle'
 import { localStore, CUSTOM_PALETTE } from '../../localStore'
 
 export default function ViewPanel() {
@@ -29,6 +30,7 @@ export default function ViewPanel() {
 
       <SidebarSection title="Rendering" icon="expand">
         <MinPixelSizeSlider />
+        <RustRenderToggle />
       </SidebarSection>
 
       <AboutSection />

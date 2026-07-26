@@ -1,7 +1,9 @@
 import { Show, batch, createEffect, createMemo, createSignal, onCleanup, onMount, untrack } from 'solid-js'
 import { store, setCellMod, clearCellMod, clearMods } from '../store'
-import { getRows, onRowsChange, regenerateRows, extendRows } from '../automata/rows'
+import { getRows, onRowsChange, regenerateRows, extendRows, clearRows } from '../automata/rows'
 import { localStore, activePalette } from '../localStore'
+import { serializeConfigIdentifier } from '../automata/identifier'
+import { initRustRenderer, setAutomataRust, ensureRowsRust, renderRowsRust, clearRowsRust, getRowLenRust, getCellRust, rustRendererReady } from '../automata/rustRender'
 
 const BASE_CELL_SIZE = 4
 const MIN_ZOOM = 0.01
@@ -26,6 +28,7 @@ export default function CanvasView() {
   const [rowTick, setRowTick] = createSignal(0)
   const [hovered, setHovered] = createSignal<HoveredCell | null>(null)
   const [tool, setTool] = createSignal<Tool>('move')
+  const [rustTick, setRustTick] = createSignal(0)
 
   const cellSize = createMemo(() => BASE_CELL_SIZE * zoom())
   const drawingTool = createMemo(() => tool() === 'pen' || tool() === 'eraser')
@@ -33,9 +36,12 @@ export default function CanvasView() {
     for (const _ in store.config.mods) return true
     return false
   })
+  // Tracks all config changes for Rust rendering (no JS rows needed in Rust mode)
+  const currentIdentifier = createMemo(() => serializeConfigIdentifier(store.config))
 
   onMount(() => {
     onCleanup(onRowsChange(() => setRowTick(t => t + 1)))
+    initRustRenderer()
   })
 
   // Pan / paint state
@@ -55,16 +61,27 @@ export default function CanvasView() {
 
   function cellAt(sx: number, sy: number): HoveredCell | null {
     const cs = cellSize()
-    const rows = getRows()
     const g = Math.floor((sy - panY()) / cs)
-    if (g < 0 || g >= rows.length) return null
+    if (g < 0) return null
+    const alignment = localStore.alignment
+
+    if (localStore.useRustRender && rustRendererReady()) {
+      const rowLen = getRowLenRust(g)
+      if (rowLen < 0) return null
+      const refI = alignment === 'left' ? 0 : alignment === 'right' ? rowLen - 1 : rowLen / 2
+      const c = Math.floor(refI + (sx - canvasW() / 2 - panX()) / cs)
+      if (c < 0 || c >= rowLen) return null
+      const state = getCellRust(g, c)
+      if (state < 0) return null
+      return { row: g, col: c, state }
+    }
+
+    const rows = getRows()
+    if (g >= rows.length) return null
     const row = rows[g]
     if (!row) return null
     const rowLen = row.length
-    const alignment = localStore.alignment
-    const refI = alignment === 'left' ? 0
-      : alignment === 'right' ? rowLen - 1
-      : rowLen / 2
+    const refI = alignment === 'left' ? 0 : alignment === 'right' ? rowLen - 1 : rowLen / 2
     const c = Math.floor(refI + (sx - canvasW() / 2 - panX()) / cs)
     if (c < 0 || c >= rowLen) return null
     return { row: g, col: c, state: row[c] }
@@ -251,6 +268,7 @@ export default function CanvasView() {
   }
 
   function maybeExtend() {
+    if (localStore.useRustRender) return
     const cs = cellSize()
     const rows = getRows()
     const totalH = rows.length * cs
@@ -260,8 +278,9 @@ export default function CanvasView() {
     }
   }
 
-  // Re-generate when automata config changes
+  // Re-generate when automata config changes (JS mode only)
   createEffect(() => {
+    if (localStore.useRustRender) return
     const c = store.config
     void c.rules.slice()
     void c.initial.slice()
@@ -276,12 +295,30 @@ export default function CanvasView() {
     regenerateRows({ ...c, mods: { ...c.mods } }, target)
   })
 
-  // Ensure enough rows when canvas resizes
+  // Ensure enough rows when canvas resizes (JS mode only)
   createEffect(() => {
+    if (localStore.useRustRender) return
     const h = canvasH()
     if (h === 0) return
     const target = untrack(() => Math.ceil(h / cellSize()) + REGEN_THRESHOLD)
     extendRows({ ...store.config, mods: { ...store.config.mods } }, target)
+  })
+
+  // Load config into Rust state when Rust mode is active and config changes
+  createEffect(() => {
+    if (!localStore.useRustRender || !rustRendererReady()) return
+    const ident = currentIdentifier()
+    const target = untrack(() => Math.max(REGEN_THRESHOLD, Math.ceil(canvasH() / cellSize()) + REGEN_THRESHOLD))
+    clearRows()
+    setAutomataRust(ident)
+    ensureRowsRust(target)
+    setRustTick(t => t + 1)
+  })
+
+  // Free Rust row memory when Rust mode is disabled
+  createEffect(() => {
+    if (localStore.useRustRender) return
+    clearRowsRust()
   })
 
   // ResizeObserver
@@ -300,8 +337,9 @@ export default function CanvasView() {
 
   // Draw
   createEffect(() => {
-    rowTick()
-    const rows = getRows()
+    const useRust = localStore.useRustRender && rustRendererReady()
+    if (useRust) rustTick(); else rowTick()
+    const rows = useRust ? [] : getRows()
     const cs = cellSize()
     const palette = activePalette()
     const px = panX()
@@ -317,7 +355,18 @@ export default function CanvasView() {
     cancelAnimationFrame(rafId)
     rafId = requestAnimationFrame(() => {
       const ctx = canvasRef?.getContext('2d')!
-      if (!ctx || rows.length === 0 || w === 0 || h === 0) return;
+      if (!ctx || w === 0 || h === 0) return;
+      if (!useRust && rows.length === 0) return;
+
+      if (useRust) {
+        const numRows = Math.ceil(Math.max(h, h - py) / cs) + REGEN_THRESHOLD
+        ensureRowsRust(numRows)
+        const pixels = renderRowsRust(w, h, px, py, zoom(), alignment, mps, palette)
+        if (pixels) {
+          ctx.putImageData(new ImageData(new Uint8ClampedArray(pixels), w, h), 0, 0)
+          return
+        }
+      }
 
       ctx.clearRect(0, 0, w, h)
 

@@ -11,6 +11,8 @@ node_modules
 dist
 dist-ssr
 *.local
+src/wasm
+rust-lib/target
 
 # Editor directories and files
 .vscode/*

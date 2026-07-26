@@ -21,6 +21,7 @@ interface LocalState {
   palette: string;
   customColors: string[];
   minPixelSize: number;
+  useRustRender: boolean;
 }
 
 function defaultCustomColors(length: number): string[] {
@@ -32,6 +33,7 @@ const DEFAULT_LOCAL: LocalState = {
   palette: 'classic',
   customColors: defaultCustomColors(2),
   minPixelSize: 2,
+  useRustRender: false,
 };
 
 function clampMinPixelSize(value: unknown): number {
@@ -65,8 +67,9 @@ function loadLocalState(): LocalState {
       : defaultCustomColors(2);
 
     const minPixelSize = clampMinPixelSize(parsed.minPixelSize);
+    const useRustRender = typeof parsed.useRustRender === 'boolean' ? parsed.useRustRender : false;
 
-    return { alignment, palette, customColors, minPixelSize };
+    return { alignment, palette, customColors, minPixelSize, useRustRender };
   } catch {
     return { ...DEFAULT_LOCAL, customColors: defaultCustomColors(2) };
   }
@@ -81,6 +84,7 @@ createRoot(() => {
       palette: localStore.palette,
       customColors: [...localStore.customColors],
       minPixelSize: localStore.minPixelSize,
+      useRustRender: localStore.useRustRender,
     };
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
@@ -92,6 +96,10 @@ createRoot(() => {
 
 export function setAlignment(a: Alignment) {
   setLocalStore('alignment', a);
+}
+
+export function setUseRustRender(value: boolean) {
+  setLocalStore('useRustRender', value);
 }
 
 export function setMinPixelSize(value: number) {

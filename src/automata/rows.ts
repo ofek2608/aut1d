@@ -22,6 +22,11 @@ export function onRowsChange(listener: () => void): () => void {
   };
 }
 
+export function clearRows() {
+  rows = []
+  notify()
+}
+
 export function regenerateRows(config: AutomataConfig, targetCount = DEFAULT_BATCH) {
   const initial = config.initial.slice();
   applyModsToRow(initial, 0, config.mods);
